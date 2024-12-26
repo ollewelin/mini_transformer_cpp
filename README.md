@@ -1,7 +1,7 @@
 # mini_transformer_cpp
 Minimal transformer in C/C++ no dependancy of machine learning library just plain C/C++ code
 Just for my own tutorial proposal
-´´´
+```
 transformer_project/
 ├── src/
 │   ├── main.cpp            # Entry point for the application
@@ -21,4 +21,4 @@ transformer_project/
 ├── build/                  # Directory for compiled files
 ├── data/                   # Sample input data for testing
 └── Makefile                # Build instructions
-´´´
+```

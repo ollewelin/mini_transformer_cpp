@@ -82,6 +82,6 @@ example data:
 ```
 #### all dimentions cos
 ![](build/cos_position_at_constructor.png)
-#### cos dim 0 2 4
-![](build/cos_pos_dim_0_2_4_only.png)
+#### cos dim 1 3 5
+![](build/cos_pos_dim_1_3_5_only.png)
 

@@ -31,7 +31,28 @@ The purpose of the positional encoding is to inject information about the positi
     Key Idea:
         pos_encoding[pos][i] stores the positional encoding for the i-th dimension of the pos-th token.
         Sine (sin) and Cosine (cos) functions with varying frequencies are used to encode positions.
+
+
 ## Position encoder initialized vector values
+Example printout
+```
+for (int pos = 0; pos < max_len; ++pos)
+    {
+        for (int i = 0; i < d_model; ++i)
+        {
+        ....
+pos = tokens position
+i = dimentions
+pos_encoding[pos][i]
+
+sin pos_encoding[0][122]: 0
+sin pos_encoding[0][124]: 0
+sin pos_encoding[0][126]: 0
+sin pos_encoding[1][0]: 0.841471
+sin pos_encoding[1][2]: 0.76172
+sin pos_encoding[1][4]: 0.681561
+```
+
 I was plot the initialized values of pos_encoding[pos][i] to show a plot what the contructor doing.
 ### Plot the sin initilized vector
 Use the octave to plot sin.dat file
@@ -55,8 +76,8 @@ example data:
 2 0 0.909297
 2 2 0.987046
 2 4 0.99748
-
 ```
+
 #### all dimentions sin
 ![](build/sin_position_at_constructor.png)
 #### sin dim 0 2 4

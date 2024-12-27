@@ -1,19 +1,37 @@
 #include "positional_encoding.h"
 #include <cmath>
+#include <iostream>
+#include <fstream>
+using namespace std;
 
 // Constructor
-PositionalEncoding::PositionalEncoding(int max_len, int d_model) {
+PositionalEncoding::PositionalEncoding(int max_len, int d_model)
+{
     pos_encoding = std::vector<std::vector<float>>(max_len, std::vector<float>(d_model, 0.0));
+    ofstream sin_file("sin.dat");
+    ofstream cos_file("cos.dat");
+    cout << "PositionalEncoding Constructor" << endl;
 
-    for (int pos = 0; pos < max_len; ++pos) {
-        for (int i = 0; i < d_model; ++i) {
-            if (i % 2 == 0) {
+    for (int pos = 0; pos < max_len; ++pos)
+    {
+        for (int i = 0; i < d_model; ++i)
+        {
+            if (i % 2 == 0)
+            {
                 pos_encoding[pos][i] = std::sin(pos / std::pow(10000.0, i / (float)d_model));
-            } else {
+                cout << "sin pos_encoding[" << pos << "][" << i << "]: " << pos_encoding[pos][i] << endl;
+                sin_file << pos << " " << i << " " << pos_encoding[pos][i] << endl; // Write to sin.dat
+            }
+            else
+            {
                 pos_encoding[pos][i] = std::cos(pos / std::pow(10000.0, (i - 1) / (float)d_model));
+                // cout << "cos pos_encoding[" << pos << "][" << i << "]: " << pos_encoding[pos][i] << endl;
+                cos_file << pos << " " << i << " " << pos_encoding[pos][i] << endl; // Write to cos.dat
             }
         }
     }
+    sin_file.close();
+    cos_file.close();
 }
 
 // Add positional encoding to input embeddings

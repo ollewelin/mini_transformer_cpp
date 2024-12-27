@@ -60,8 +60,8 @@ example data:
 #### sin dim 0 2 4
 ![](build/sin_pos_dim_0_2_4_only.png)
 
-### Plot the sin initilized vector
-Use the octave to plot sin.dat file
+### Plot the cos initilized vector
+Use the octave to plot cos.dat file
 example data:
 ```
 0 1 1

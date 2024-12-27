@@ -34,7 +34,7 @@ The purpose of the positional encoding is to inject information about the positi
 
 
 ## Position encoder initialized vector values
-Example printout
+Example printout of sin
 ```
 for (int pos = 0; pos < max_len; ++pos)
     {
@@ -45,6 +45,7 @@ pos = tokens position
 i = dimentions
 pos_encoding[pos][i]
 
+example pos 0 and 1
 sin pos_encoding[0][122]: 0
 sin pos_encoding[0][124]: 0
 sin pos_encoding[0][126]: 0

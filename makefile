@@ -1,37 +1,19 @@
-# Compiler and flags
-CC = g++ -std=c++14 -O3
-CFLAGS = -g -Wall
+CXX = g++
+CXXFLAGS = -g -Wall -Iinclude -std=c++17
 
-# Directories
-SRC_DIR = src
-BUILD_DIR = build
-INCLUDE_DIR = include
-
-# Source and object files
-SRCS = $(wildcard $(SRC_DIR)/*.cpp)
-OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRCS))
-
-# Output executable
 TARGET = transformer_app
+SRCS = src/main.cpp src/attention.cpp src/embedding.cpp src/feed_forward.cpp src/positional_encoding.cpp src/transformer.cpp src/utils.cpp
+OBJS = $(patsubst src/%.cpp,build/%.o,$(SRCS))
 
-# Default target
-all: $(TARGET)
+all: build/$(TARGET)
 
-# Build target
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+build/$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
-# Object file compilation
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
-	mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
+build/%.o: src/%.cpp
+	mkdir -p build  # Create the 'build' directory at the top level
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Clean build files
 clean:
-	rm -rf $(BUILD_DIR) $(TARGET)
-
-# Rebuild everything
-rebuild: clean all
-
-# Phony targets
-.PHONY: all clean rebuild
+	rm -rf build
+.PHONY: all clean

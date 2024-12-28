@@ -28,10 +28,19 @@ Purpose of Positional Encoding
 
 The purpose of the positional encoding is to inject information about the position of each token in the sequence. Transformers process sequences in parallel without inherent knowledge of token order, so positional encoding compensates for this.
 
-    Key Idea:
-        pos_encoding[pos][i] stores the positional encoding for the i-th dimension of the pos-th token.
-        Sine (sin) and Cosine (cos) functions with varying frequencies are used to encode positions.
+Key Idea:
 
+        pos_encoding[pos][i] 
+        
+stores the positional encoding for the i-th dimension of the pos-th token.
+Sine (sin) and Cosine (cos) functions with varying frequencies are used to encode positions.
+
+
+### int d_model is like set the resoltion of the measure stick
+
+    int d_model = 128; // The "resolution" of the positional encoding space. 
+                   // Like a meter stick with 128 evenly spaced lines, 
+                   // this determines how finely token positions are encoded.
 
 ## Position encoder initialized vector values
 Example printout of sin

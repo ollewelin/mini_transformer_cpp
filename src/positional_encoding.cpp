@@ -7,6 +7,11 @@ using namespace std;
 // Constructor
 PositionalEncoding::PositionalEncoding(int max_len, int d_model)
 {
+// "max_len" Maximum sequence length (number of tokens in a single input)
+// "d_model" set the "resolution" of the positional encoding space. 
+// Like a meter stick with 128 evenly spaced lines, 
+// this determines how finely token positions are encoded.    
+
     pos_encoding = std::vector<std::vector<float>>(max_len, std::vector<float>(d_model, 0.0));
     ofstream sin_file("sin.dat");
     ofstream cos_file("cos.dat");

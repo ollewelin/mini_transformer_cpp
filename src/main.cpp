@@ -1,10 +1,16 @@
 #include "transformer.h"
 #include <iostream>
+using namespace std;
 
 int main() {
+
+    cout << "Transformer test in miniformat C/C++ no use of ML (Machine Learning) library" << endl;
+
     // Define parameters
     int vocab_size = 5000;
-    int d_model = 128;
+    int d_model = 128; // The "resolution" of the positional encoding space. 
+                   // Like a meter stick with 128 evenly spaced lines, 
+                   // this determines how finely token positions are encoded.
     int num_heads = 8;
     int d_ff = 256;
     int num_layers = 6;
@@ -13,7 +19,7 @@ int main() {
 
     // Create transformer
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers);
-
+    
     // Sample input (token IDs)
     std::vector<int> input = {1, 2, 3, 4, 5};
 

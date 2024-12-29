@@ -120,7 +120,7 @@ example data:
 
 
 ## Embedding_matrix
-1. Purpose of embedding_matrix
+### 1. Purpose of embedding_matrix
 
 The embedding_matrix serves as a lookup table for mapping each token ID (integer) to a high-dimensional vector of size d_model.
 
@@ -132,13 +132,76 @@ d_model (Columns):
 Each column in the row represents one dimension of the token's embedding.
 Example: If d_model = 128, each token is represented as a 128-dimensional vector.
 
-Example
+### 2. What the Code Does
 
-Let’s assume:
+        embedding_matrix = std::vector<std::vector<float>>(vocab_size, std::vector<float>(d_model));
+
+This code:
+Creates a 2D vector:
+The outer vector has vocab_size rows (5000 in your case).
+Each row is an inner vector of size d_model (128 in your example).
+
+Initializes All Values to Zero:
+By default, all elements in the matrix are initialized to 0.0.
+Example for vocab_size = 3 and d_model = 4:
+
+```
+embedding_matrix = [
+    [0.0, 0.0, 0.0, 0.0],  // Token 0
+    [0.0, 0.0, 0.0, 0.0],  // Token 1
+    [0.0, 0.0, 0.0, 0.0]   // Token 2
+];
+```
+
+
+### Example
+
+#### 1. Let’s assume:
 
             vocab_size = 3 (3 tokens in the vocabulary).
             d_model = 4 (4-dimensional embeddings).
-Initial matrix:
+#### 2. Initial matrix:
+
+```
+embedding_matrix = std::vector<std::vector<float>>(3, std::vector<float>(4));
+
+embedding_matrix = [
+    [0.0, 0.0, 0.0, 0.0],  // Token 0
+    [0.0, 0.0, 0.0, 0.0],  // Token 1
+    [0.0, 0.0, 0.0, 0.0]   // Token 2
+];
+```
+#### 3. Can Be Updated with Random or Learned Values:
+
+    Later, this matrix is either:
+        Initialized with random values (during training).
+        Filled with pre-trained embeddings (e.g., Word2Vec or GloVe).
+        
+#### 4. How It Works During a Forward Pass
+
+4.1 Input Tokens (IDs):
+A sentence like "The cat sat" is tokenized into IDs (e.g., [42, 18, 87]).
+
+4.2 Lookup in the Embedding Matrix:
+For each token ID, the corresponding row in embedding_matrix is retrieved:
+```
+Token ID 42 → Row 42 (vector for "The").
+Token ID 18 → Row 18 (vector for "cat").
+Token ID 87 → Row 87 (vector for "sat").
+```
+
+4.3 Result:
+A 2D vector is created where:
+Rows correspond to tokens in the input sequence.
+Columns correspond to the embedding dimensions (d_model).
+
+### Example
+
+Let’s assume:
+
+        vocab_size = 3 (3 tokens in the vocabulary).
+        d_model = 4 (4-dimensional embeddings).
+    
 ```
 embedding_matrix = std::vector<std::vector<float>>(3, std::vector<float>(4));
 

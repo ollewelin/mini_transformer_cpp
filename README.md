@@ -35,10 +35,6 @@ Purpose of Positional Encoding
 The purpose of the positional encoding is to inject information about the position of each token in the sequence. Transformers process sequences in parallel without inherent knowledge of token order, so positional encoding compensates for this.
 
 Key Idea:
-Vector:
-
-        pos_encoding = std::vector<std::vector<float>>(max_len, std::vector<float>(d_model, 0.0));
-
 
         pos_encoding[pos][i] 
         

@@ -120,6 +120,10 @@ example data:
 
 
 ## Embedding_matrix
+Code: 
+        embedding.h
+        embedding.cpp
+
 ### 1. Purpose of embedding_matrix
 
 The embedding_matrix serves as a lookup table for mapping each token ID (integer) to a high-dimensional vector of size d_model.
@@ -143,16 +147,6 @@ Each row is an inner vector of size d_model (128 in your example).
 
 Initializes All Values to Zero:
 By default, all elements in the matrix are initialized to 0.0.
-Example for vocab_size = 3 and d_model = 4:
-
-```
-embedding_matrix = [
-    [0.0, 0.0, 0.0, 0.0],  // Token 0
-    [0.0, 0.0, 0.0, 0.0],  // Token 1
-    [0.0, 0.0, 0.0, 0.0]   // Token 2
-];
-```
-
 
 ### Example
 

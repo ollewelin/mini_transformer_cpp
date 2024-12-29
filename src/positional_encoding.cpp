@@ -24,7 +24,7 @@ PositionalEncoding::PositionalEncoding(int max_len, int d_model)
             if (i % 2 == 0)
             {
                 pos_encoding[pos][i] = std::sin(pos / std::pow(10000.0, i / (float)d_model));
-                cout << "sin pos_encoding[" << pos << "][" << i << "]: " << pos_encoding[pos][i] << endl;
+                //cout << "sin pos_encoding[" << pos << "][" << i << "]: " << pos_encoding[pos][i] << endl;
                 sin_file << pos << " " << i << " " << pos_encoding[pos][i] << endl; // Write to sin.dat
             }
             else

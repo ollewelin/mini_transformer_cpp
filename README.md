@@ -173,10 +173,21 @@ embedding_matrix = [
 ```
 #### 3. Can Be Updated with Random or Learned Values:
 
-    Later, this matrix is either:
-        Initialized with random values (during training).
-        Filled with pre-trained embeddings (e.g., Word2Vec or GloVe).
-        
+Later, this matrix is either:
+Initialized with random values (during training).
+Filled with pre-trained embeddings (e.g., Word2Vec or GloVe).
+
+
+Suppose we update it with random values:
+```
+embedding_matrix = [
+    [0.12, 0.34, -0.56, 0.78],  // Token 0
+    [0.91, -0.45, 0.67, -0.23], // Token 1
+    [0.05, 0.14, -0.32, 0.89]   // Token 2
+];
+
+```
+  
 #### 4. How It Works During a Forward Pass
 
 4.1 Input Tokens (IDs):
@@ -203,23 +214,7 @@ Let’s assume:
         d_model = 4 (4-dimensional embeddings).
     
 ```
-embedding_matrix = std::vector<std::vector<float>>(3, std::vector<float>(4));
 
-embedding_matrix = [
-    [0.0, 0.0, 0.0, 0.0],  // Token 0
-    [0.0, 0.0, 0.0, 0.0],  // Token 1
-    [0.0, 0.0, 0.0, 0.0]   // Token 2
-];
-```
-Suppose we update it with random values:
-```
-embedding_matrix = [
-    [0.12, 0.34, -0.56, 0.78],  // Token 0
-    [0.91, -0.45, 0.67, -0.23], // Token 1
-    [0.05, 0.14, -0.32, 0.89]   // Token 2
-];
-
-```
 ### Summary
 
         vocab_size 

@@ -118,7 +118,8 @@ example data:
 #### cos dim 1 3 5
 ![](build/cos_pos_dim_1_3_5_only.png)
 
-### Embedding_matrix
+
+## Embedding_matrix
 1. Purpose of embedding_matrix
 
 The embedding_matrix serves as a lookup table for mapping each token ID (integer) to a high-dimensional vector of size d_model.
@@ -156,6 +157,12 @@ embedding_matrix = [
 ];
 
 ```
+### Summary
+        vocab_size 
+defines the number of rows in the matrix, representing the number of unique tokens the model can understand.
+        d_model 
+defines the number of columns, representing the size of each token's embedding vector.
+The matrix acts as a lookup table, converting token IDs into dense vector representations.
 
 
 

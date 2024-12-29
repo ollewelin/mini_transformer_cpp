@@ -24,6 +24,12 @@ transformer_project/
 └── Makefile                # Build instructions
 ```
 ## Understand position encoder
+Code:
+
+        positional_encoding.h
+        positional_encoding.cpp
+        
+
 Purpose of Positional Encoding
 
 The purpose of the positional encoding is to inject information about the position of each token in the sequence. Transformers process sequences in parallel without inherent knowledge of token order, so positional encoding compensates for this.

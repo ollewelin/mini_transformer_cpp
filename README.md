@@ -118,3 +118,45 @@ example data:
 #### cos dim 1 3 5
 ![](build/cos_pos_dim_1_3_5_only.png)
 
+### Embedding_matrix
+1. Purpose of embedding_matrix
+
+The embedding_matrix serves as a lookup table for mapping each token ID (integer) to a high-dimensional vector of size d_model.
+
+vocab_size (Rows):
+Each row corresponds to a unique token in the vocabulary.
+Example: If "The" has token ID 42, row 42 of the embedding matrix contains the vector representation of "The".
+
+d_model (Columns):
+Each column in the row represents one dimension of the token's embedding.
+Example: If d_model = 128, each token is represented as a 128-dimensional vector.
+
+Example
+
+Let’s assume:
+
+            vocab_size = 3 (3 tokens in the vocabulary).
+            d_model = 4 (4-dimensional embeddings).
+Initial matrix:
+```
+embedding_matrix = std::vector<std::vector<float>>(3, std::vector<float>(4));
+
+embedding_matrix = [
+    [0.0, 0.0, 0.0, 0.0],  // Token 0
+    [0.0, 0.0, 0.0, 0.0],  // Token 1
+    [0.0, 0.0, 0.0, 0.0]   // Token 2
+];
+```
+Suppose we update it with random values:
+```
+embedding_matrix = [
+    [0.12, 0.34, -0.56, 0.78],  // Token 0
+    [0.91, -0.45, 0.67, -0.23], // Token 1
+    [0.05, 0.14, -0.32, 0.89]   // Token 2
+];
+
+```
+
+
+
+

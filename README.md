@@ -206,15 +206,6 @@ A 2D vector is created where:
 Rows correspond to tokens in the input sequence.
 Columns correspond to the embedding dimensions (d_model).
 
-### Example
-
-Let’s assume:
-
-        vocab_size = 3 (3 tokens in the vocabulary).
-        d_model = 4 (4-dimensional embeddings).
-    
-```
-
 ### Summary
 
         vocab_size 

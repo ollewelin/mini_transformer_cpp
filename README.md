@@ -158,9 +158,13 @@ embedding_matrix = [
 
 ```
 ### Summary
+
         vocab_size 
+
 defines the number of rows in the matrix, representing the number of unique tokens the model can understand.
+        
         d_model 
+
 defines the number of columns, representing the size of each token's embedding vector.
 The matrix acts as a lookup table, converting token IDs into dense vector representations.
 

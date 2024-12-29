@@ -36,6 +36,7 @@ The purpose of the positional encoding is to inject information about the positi
 
 Key Idea:
 
+        pos_encoding = std::vector<std::vector<float>>(max_len, std::vector<float>(d_model, 0.0));
         pos_encoding[pos][i] 
         
 stores the positional encoding for the i-th dimension of the pos-th token.

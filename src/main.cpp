@@ -10,7 +10,11 @@ using namespace std;
 #include "utils.h"
 int main() {
 
-    cout << "Transformer test in miniformat C/C++ no use of ML (Machine Learning) library" << endl;
+cout << "Transformer Test in Mini Format (C/C++) - No Use of ML Libraries" << endl;
+cout << "This mini Transformer project is heavily guided and inspired by AI-powered assistance (Transformer LLM)." << endl;
+cout << "The goal is to build and understand the Transformer algorithm from scratch using pure C++." << endl;
+cout << "Testing key components step by step..." << endl;
+
 #ifdef TEST_UTILS
     cout << "Test utils functions here: " << endl;
 
@@ -100,9 +104,30 @@ int main() {
 
     // Define parameters
     int vocab_size = 5000;
-    int d_model = 128; // The "resolution" of the positional encoding space. 
-                   // Like a meter stick with 128 evenly spaced lines, 
-                   // this determines how finely token positions are encoded.
+    int d_model = 128; // The "resolution" of the positional encoding and embedding space. 
+                    // Think of it like a meter stick with 128 evenly spaced lines: 
+                    // this determines how finely the meaning of a token can be represented
+                    // across multiple dimensions.
+                    //
+                    // Each token (word or sub-word) is not just an isolated entity but carries 
+                    // a representation that heavily depends on its position and relationships 
+                    // to other tokens in the context. For example, the word "bank" could 
+                    // mean "riverbank" or "financial bank," and its meaning is influenced 
+                    // by neighboring words.
+                    //
+                    // In this context, "d_model" defines the number of dimensions (features) 
+                    // used to represent these relationships. Higher d_model provides a finer 
+                    // "resolution," allowing the model to encode more complex interactions 
+                    // and associations across the sequence. 
+                    //
+                    // Increasing d_model expands the range of nuances and relationships that 
+                    // the model can capture, enabling it to differentiate subtle differences 
+                    // in meaning based on positional and contextual variations in the input 
+                    // sequence.
+                    //
+                    // However, higher d_model also increases computational complexity and 
+                    // the risk of overfitting for small datasets, so a balance is needed.
+
     int num_heads = 8;
     int d_ff = 256;
     int num_layers = 6;

@@ -49,9 +49,31 @@ Sine (sin) and Cosine (cos) functions with varying frequencies are used to encod
 
 ### "d_model" is like set the resolution of the measure 
 
-    int d_model = 128; // The "resolution" of the positional encoding space. 
-                   // Like a meter stick with 128 evenly spaced lines, 
-                   // this determines how finely token positions are encoded.
+```
+    int d_model = 128; // The "resolution" of the positional encoding and embedding space. 
+                    // Think of it like a meter stick with 128 evenly spaced lines: 
+                    // this determines how finely the meaning of a token can be represented
+                    // across multiple dimensions.
+                    //
+                    // Each token (word or sub-word) is not just an isolated entity but carries 
+                    // a representation that heavily depends on its position and relationships 
+                    // to other tokens in the context. For example, the word "bank" could 
+                    // mean "riverbank" or "financial bank," and its meaning is influenced 
+                    // by neighboring words.
+                    //
+                    // In this context, "d_model" defines the number of dimensions (features) 
+                    // used to represent these relationships. Higher d_model provides a finer 
+                    // "resolution," allowing the model to encode more complex interactions 
+                    // and associations across the sequence. 
+                    //
+                    // Increasing d_model expands the range of nuances and relationships that 
+                    // the model can capture, enabling it to differentiate subtle differences 
+                    // in meaning based on positional and contextual variations in the input 
+                    // sequence.
+                    //
+                    // However, higher d_model also increases computational complexity and 
+                    // the risk of overfitting for small datasets, so a balance is needed.
+```
 
 ## Position encoder initialized vector values
 Example printout of sin

@@ -83,14 +83,6 @@ Sine (sin) and Cosine (cos) functions with varying frequencies are used to encod
 
 ## Position encoder initialized vector values
 
-Note: 
-
-Note that dimentions 
-
-        d_model = 128
-
-Is a key parameter in the this Position encoder
-
 Example printout of sin
 ```
 for (int pos = 0; pos < max_len; ++pos)

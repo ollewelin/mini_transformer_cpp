@@ -1,14 +1,46 @@
 #include "attention.h"
 #include "utils.h"
 #include <cmath>
+#include <cstdlib> // For std::rand
+#include <ctime>   // For std::time
 
 MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads)
     : weights_q(d_model, std::vector<float>(d_model, 0.0)),
       weights_k(d_model, std::vector<float>(d_model, 0.0)),
       weights_v(d_model, std::vector<float>(d_model, 0.0))
 {
-    // Initialize weights here if needed
+    // Seed the random number generator (if not already seeded)
+    static bool seeded = false;
+    if (!seeded) {
+        std::srand(std::time(0));
+        seeded = true;
+    }
+
+    // He Initialization: scale factor sqrt(2 / fan_in)
+    float scale = std::sqrt(2.0f / d_model);
+
+    // Initialize weights_q
+    for (auto& row : weights_q) {
+        for (auto& val : row) {
+            val = scale * (static_cast<float>(std::rand()) / RAND_MAX - 0.5f) * 2.0f; // Uniform [-scale, scale]
+        }
+    }
+
+    // Initialize weights_k
+    for (auto& row : weights_k) {
+        for (auto& val : row) {
+            val = scale * (static_cast<float>(std::rand()) / RAND_MAX - 0.5f) * 2.0f; // Uniform [-scale, scale]
+        }
+    }
+
+    // Initialize weights_v
+    for (auto& row : weights_v) {
+        for (auto& val : row) {
+            val = scale * (static_cast<float>(std::rand()) / RAND_MAX - 0.5f) * 2.0f; // Uniform [-scale, scale]
+        }
+    }
 }
+
 
 std::vector<std::vector<float>> MultiHeadAttention::forward(
     const std::vector<std::vector<float>> &query,

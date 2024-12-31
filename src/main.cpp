@@ -4,16 +4,62 @@
 #include <vector>
 
 using namespace std;
-//#define TEST_UTILS
-#define TEST_ATTENTION
-#include "attention.h"
-#include "utils.h"
-int main() {
 
+//#define TEST_xxxxx will Test and validate smaller parts of the code
+//#define TEST_UTILS
+//#define TEST_ATTENTION
+//#include "attention.h"
+//#include "utils.h"
+
+int main() {
+cout << "========================================================================================================" << endl;
 cout << "Transformer Test in Mini Format (C/C++) - No Use of ML Libraries" << endl;
 cout << "This mini Transformer project is heavily guided and inspired by AI-powered assistance (Transformer LLM)." << endl;
 cout << "The goal is to build and understand the Transformer algorithm from scratch using pure C++." << endl;
-cout << "Testing key components step by step..." << endl;
+cout << "========================================================================================================" << endl;
+cout << endl;
+
+    // Define parameters
+    int vocab_size = 5000;
+    int d_model = 128; // The "resolution" of the positional encoding and embedding space. 
+                    // Think of it like a meter stick with 128 evenly spaced lines: 
+                    // this determines how finely the meaning of a token can be represented
+                    // across multiple dimensions.
+                    //
+                    // Each token (word or sub-word) is not just an isolated entity but carries 
+                    // a representation that heavily depends on its position and relationships 
+                    // to other tokens in the context. For example, the word "bank" could 
+                    // mean "riverbank" or "financial bank," and its meaning is influenced 
+                    // by neighboring words.
+                    //
+                    // In this context, "d_model" defines the number of dimensions (features) 
+                    // used to represent these relationships. Higher d_model provides a finer 
+                    // "resolution," allowing the model to encode more complex interactions 
+                    // and associations across the sequence. 
+                    //
+                    // Increasing d_model expands the range of nuances and relationships that 
+                    // the model can capture, enabling it to differentiate subtle differences 
+                    // in meaning based on positional and contextual variations in the input 
+                    // sequence.
+                    //
+                    // However, higher d_model also increases computational complexity and 
+                    // the risk of overfitting for small datasets, so a balance is needed.
+
+    int num_heads = 8;
+    int d_ff = 256;
+    int num_layers = 6;
+    int max_len = 64; // Maximum sequence length (number of tokens in a single input)
+
+    std::cout << "Do you want to load an existing model parameter with embedding matrix from a file? (Y/N, y/n): ";
+    std::string choice;
+    std::cin >> choice;
+
+    bool load_parameters_yes_no = false;
+    if (choice == "/Y" || choice == "y" ) {
+        load_parameters_yes_no = true;// Load from file
+    } else {
+        load_parameters_yes_no = false; // Random initialization
+    }
 
 #ifdef TEST_UTILS
     cout << "Test utils functions here: " << endl;
@@ -70,7 +116,7 @@ cout << "Testing key components step by step..." << endl;
     vector<vector<float>> value = {{4.0, 5.0}, {6.0, 7.0}};
 
     // Initialize MultiHeadAttention with 2 dimensions and 1 head (simplest case)
-    MultiHeadAttention attention(2, 1);
+    MultiHeadAttention attention(2, 1, load_parameters_yes_no, num_layers);
 
     // Manually set weights for testing (simplified identity weights)
     attention.weights_q = {{1.0, 0.0}, {0.0, 1.0}};
@@ -101,48 +147,6 @@ cout << "Testing key components step by step..." << endl;
         cout << endl;
     }
 #endif
-
-    // Define parameters
-    int vocab_size = 5000;
-    int d_model = 128; // The "resolution" of the positional encoding and embedding space. 
-                    // Think of it like a meter stick with 128 evenly spaced lines: 
-                    // this determines how finely the meaning of a token can be represented
-                    // across multiple dimensions.
-                    //
-                    // Each token (word or sub-word) is not just an isolated entity but carries 
-                    // a representation that heavily depends on its position and relationships 
-                    // to other tokens in the context. For example, the word "bank" could 
-                    // mean "riverbank" or "financial bank," and its meaning is influenced 
-                    // by neighboring words.
-                    //
-                    // In this context, "d_model" defines the number of dimensions (features) 
-                    // used to represent these relationships. Higher d_model provides a finer 
-                    // "resolution," allowing the model to encode more complex interactions 
-                    // and associations across the sequence. 
-                    //
-                    // Increasing d_model expands the range of nuances and relationships that 
-                    // the model can capture, enabling it to differentiate subtle differences 
-                    // in meaning based on positional and contextual variations in the input 
-                    // sequence.
-                    //
-                    // However, higher d_model also increases computational complexity and 
-                    // the risk of overfitting for small datasets, so a balance is needed.
-
-    int num_heads = 8;
-    int d_ff = 256;
-    int num_layers = 6;
-    int max_len = 64; // Maximum sequence length (number of tokens in a single input)
-
-    std::cout << "Do you want to load an existing model parameter with embedding matrix from a file? (Y/N, y/n): ";
-    std::string choice;
-    std::cin >> choice;
-
-    bool load_parameters_yes_no = false;
-    if (choice == "/Y" || choice == "y" ) {
-        load_parameters_yes_no = true;// Load from file
-    } else {
-        load_parameters_yes_no = false; // Random initialization
-    }
 
     // Create transformer
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);

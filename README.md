@@ -53,7 +53,7 @@ stores the positional encoding for the i-th dimension of the pos-th token.
 Sine (sin) and Cosine (cos) functions with varying frequencies are used to encode positions.
 
 
-### "d_model" is like set the resolution of the measure 
+### "d_model" is like set the resolution of dimentions of distance measure 
 
 ```
     int d_model = 128; // The "resolution" of the positional encoding and embedding space. 

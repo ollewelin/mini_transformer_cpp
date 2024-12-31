@@ -1,4 +1,7 @@
 # Tutorial code for C/C++ Transformer "mini_transformer_cpp"
+## Note code AI-powered assistance:
+This code is inspired by AI-powered assistance
+
 ### Overview and purpose:
 Transformer Test in Mini Format (C/C++) - No Use of ML Libraries. Just for my own tutorial proposal in the first hand but may enjoy other as well.
 

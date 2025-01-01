@@ -25,6 +25,7 @@ transformer_project/
 │   └── utils.cpp           # Helper functions
 ├── include/
 │   ├── transformer.h
+│   ├── config.h            # Only contain preprocessor directives (Global preprocessor directives) etc 
 │   ├── attention.h
 │   ├── feed_forward.h
 │   ├── embedding.h

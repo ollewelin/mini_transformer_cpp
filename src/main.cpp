@@ -67,8 +67,8 @@ cout << endl;
 
     // test utils funcftions
     // Test 1: Matrix Multiplication
-    vector<vector<float>> mat1 = {{1.0, 2.0}, {3.0, 4.0}};
-    vector<vector<float>> mat2 = {{5.0, 6.0}, {7.0, 8.0}};
+    vector<vector<float>> mat1 = {{10.0, 20.0, 30.0}, {40.0, 50.0, 60.0}};
+    vector<vector<float>> mat2 = {{1.0, 2.0}, {3.0, 4.0}, {5.0, 6.0}};
     vector<vector<float>> matmul_result = Utils::matmul(mat1, mat2);
 
     cout << "\nMatrix Multiplication Result:" << endl;

@@ -154,13 +154,25 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
         }
     }
 
-    // 3. Apply softmax to scores
+    // 3. Apply masking to prevent attending to future tokens
+    for (size_t i = 0; i < scores.size(); ++i)
+    {
+        for (size_t j = 0; j < scores[i].size(); ++j)
+        {
+            if (j > i) // Mask future positions
+            {
+                scores[i][j] = -std::numeric_limits<float>::infinity();
+            }
+        }
+    }
+
+    // 4. Apply softmax to scores
     for (size_t i = 0; i < scores.size(); ++i)
     {
         scores[i] = Utils::softmax(scores[i]);
     }
 
-    // 4. Multiply scores with V
+    // 5. Multiply scores with V
     auto output = Utils::matmul(scores, value);
     return output;
 }

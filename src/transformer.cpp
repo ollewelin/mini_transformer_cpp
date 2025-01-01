@@ -1,7 +1,4 @@
 #include "transformer.h"
-
-
-
 std::vector<std::vector<float>> Transformer::forward(const std::vector<int> &input) {
     // Embedding and positional encoding will be applied here.
     std::vector<std::vector<float>> output = embedding.forward(input);

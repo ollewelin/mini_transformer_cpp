@@ -1,7 +1,7 @@
 #ifndef ATTENTION_H
 #define ATTENTION_H
-//#define TEST_ATTENTION
 #include <vector>
+#include "config.h"
 
 class MultiHeadAttention {
 public:

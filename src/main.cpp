@@ -5,11 +5,11 @@
 
 using namespace std;
 
-//#define TEST_xxxxx will Test and validate smaller parts of the code
-//#define TEST_UTILS
-//#define TEST_ATTENTION
-//#include "attention.h"
-//#include "utils.h"
+#include "config.h"
+#ifdef TEST_UTILS
+#include "attention.h"
+#include "utils.h"
+#endif
 
 int main() {
 cout << "========================================================================================================" << endl;
@@ -62,6 +62,7 @@ cout << endl;
     }
 
 #ifdef TEST_UTILS
+
     cout << "Test utils functions here: " << endl;
 
     // test utils funcftions

@@ -92,7 +92,7 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_par
             exit(EXIT_FAILURE);
         }
     }
-
+#ifdef PRINT_OUT_INIT_VECTORS
     // Print a few rows of weights_q, weights_k, and weights_v
     std::cout << "\nSample rows of weights_q for layer " << layer_index << ":" << std::endl;
     for (size_t i = 0; i < std::min<size_t>(3, weights_q.size()); ++i) {
@@ -117,6 +117,7 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_par
         }
         std::cout << std::endl;
     }
+#endif
 }
 
 std::vector<std::vector<float>> MultiHeadAttention::forward(

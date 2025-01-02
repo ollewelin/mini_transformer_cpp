@@ -5,6 +5,20 @@
 #include <algorithm> // Add this for std::max_element
 #include <iomanip>   // For formatted output
 
+float Utils::leaky_relu(float x) {
+    return (x > 0) ? x : GLOBAL_LEAKY_SLOPE * x;
+}
+
+std::vector<std::vector<float>> Utils::leaky_relu(const std::vector<std::vector<float>>& input) {
+    std::vector<std::vector<float>> output = input;
+    for (auto& row : output) {
+        for (auto& val : row) {
+            val = leaky_relu(val);
+        }
+    }
+    return output;
+}
+
 namespace Utils {
 
     // Function to check matrix dimensions

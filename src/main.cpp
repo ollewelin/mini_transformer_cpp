@@ -14,12 +14,60 @@ using namespace std;
 #include "utils.h"
 #endif
 
+#ifdef TEST_FEEDFORWARD
+#include "feed_forward.h"
+#endif
+
+
 int main() {
-cout << "========================================================================================================" << endl;
-cout << "Transformer Test in Mini Format (C/C++) - No Use of ML Libraries" << endl;
-cout << "The goal is to build and understand the Transformer algorithm from scratch using pure C++." << endl;
-cout << "========================================================================================================" << endl;
-cout << endl;
+    cout << "========================================================================================================" << endl;
+    cout << "Transformer Test in Mini Format (C/C++) - No Use of ML Libraries" << endl;
+    cout << "The goal is to build and understand the Transformer algorithm from scratch using pure C++." << endl;
+    cout << "========================================================================================================" << endl;
+    cout << endl;
+    std::cout << "Do you want to load an existing model parameter with embedding matrix from a file? (Y/N, y/n): ";
+    std::string choice;
+    std::cin >> choice;
+
+    bool load_parameters_yes_no = false;
+    if (choice == "/Y" || choice == "y")
+    {
+        load_parameters_yes_no = true; // Load from file
+    }
+    else
+    {
+        load_parameters_yes_no = false; // Random initialization
+    }
+
+#ifdef TEST_FEEDFORWARD
+    cout << "==================== Test: FeedForward ====================\n";
+
+    // Define dimensions for the test
+    int d_model_ffd_test = 4;  // Input dimensionality
+    int d_ff_ffd_test = 6;     // Hidden layer dimensionality
+    int layer_index_ffd_test = 0;
+
+    // Create a FeedForward object
+    FeedForward feed_forward(d_model_ffd_test, d_ff_ffd_test, load_parameters_yes_no, layer_index_ffd_test);
+
+    // Define a small input matrix (e.g., 2 tokens with d_model dimensions)
+    std::vector<std::vector<float>> input_ffd_test = {
+        {1.0, 2.0, 3.0, 4.0},
+        {0.5, 0.6, 0.7, 0.8}
+    };
+
+    cout << "input_ffd_test matrix (shape: " << input_ffd_test.size() << " x " << input_ffd_test[0].size() << "):\n";
+    Utils::print_matrix(input_ffd_test);
+
+    // Forward pass through the FeedForward network
+    auto output_ffd_test = feed_forward.forward(input_ffd_test);
+
+    // Print the output_ffd_test
+    cout << "Output matrix (shape: " << output_ffd_test.size() << " x " << output_ffd_test[0].size() << "):\n";
+    Utils::print_matrix(output_ffd_test);
+
+    cout << "==========================================================\n";
+#endif
 
 #ifdef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION
     // Make some PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION with small input matrix tests 
@@ -127,16 +175,6 @@ cout << endl;
     int num_layers = 6;
     int max_len = 64; // Maximum sequence length (number of tokens in a single input)
 
-    std::cout << "Do you want to load an existing model parameter with embedding matrix from a file? (Y/N, y/n): ";
-    std::string choice;
-    std::cin >> choice;
-
-    bool load_parameters_yes_no = false;
-    if (choice == "/Y" || choice == "y" ) {
-        load_parameters_yes_no = true;// Load from file
-    } else {
-        load_parameters_yes_no = false; // Random initialization
-    }
 
 
 

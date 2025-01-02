@@ -1,10 +1,83 @@
 #include "feed_forward.h"
+#include "utils.h"
 
-FeedForward::FeedForward(int d_model, int d_ff)
+FeedForward::FeedForward(int d_model, int d_ff, bool load_parameters_yes_no, int layer_index)
+    : weights1(d_model, std::vector<float>(d_ff, 0.0f)),
+      weights2(d_ff, std::vector<float>(d_model, 0.0f))
 {
+    const std::string weights_file = "ffd_weight_layer_" + std::to_string(layer_index) + ".bin";
+    bool loaded = false;
+
+    if (load_parameters_yes_no) {
+        std::ifstream file(weights_file, std::ios::binary);
+        if (file.is_open()) {
+            // Load weights1
+            for (auto& row : weights1) {
+                file.read(reinterpret_cast<char*>(row.data()), row.size() * sizeof(float));
+            }
+            // Load weights2
+            for (auto& row : weights2) {
+                file.read(reinterpret_cast<char*>(row.data()), row.size() * sizeof(float));
+            }
+            file.close();
+            std::cout << "FeedForward weights for layer " << layer_index << " loaded from file.\n";
+            loaded = true;
+        } else {
+            std::cerr << "Warning: Could not open " << weights_file << ". Falling back to random initialization.\n";
+        }
+    }
+
+    if (!loaded) {
+        std::srand(std::time(0));
+        float scale1 = std::sqrt(2.0f / d_model);
+        float scale2 = std::sqrt(2.0f / d_ff);
+
+        // Randomly initialize weights1
+        for (auto& row : weights1) {
+            for (auto& val : row) {
+                val = scale1 * (static_cast<float>(std::rand()) / RAND_MAX - 0.5f) * 2.0f;
+            }
+        }
+
+        // Randomly initialize weights2
+        for (auto& row : weights2) {
+            for (auto& val : row) {
+                val = scale2 * (static_cast<float>(std::rand()) / RAND_MAX - 0.5f) * 2.0f;
+            }
+        }
+
+        std::ofstream file(weights_file, std::ios::binary);
+        if (file.is_open()) {
+            for (const auto& row : weights1) {
+                file.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
+            }
+            for (const auto& row : weights2) {
+                file.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
+            }
+            file.close();
+            std::cout << "FeedForward weights for layer " << layer_index << " initialized and saved to file.\n";
+        } else {
+            std::cerr << "Error: Could not save FeedForward weights to file.\n";
+            exit(EXIT_FAILURE);
+        }
+    }
 }
 
-std::vector<std::vector<float>> FeedForward::forward(const std::vector<std::vector<float>> &input)
+std::vector<std::vector<float>> FeedForward::forward(const std::vector<std::vector<float>>& input)
 {
-    return std::vector<std::vector<float>>();
+    // Step 1: Linear transformation with weights1
+    auto hidden = Utils::matmul(input, weights1);
+
+    // Step 2: Apply ReLU activation
+    for (auto& row : hidden) {
+        for (auto& val : row) {
+            //val = std::max(0.0f, val); // ReLU activation
+            val = Utils::leaky_relu(val); // ReLU Leaky activation
+        }
+    }
+
+    // Step 3: Linear transformation with weights2
+    auto output = Utils::matmul(hidden, weights2);
+
+    return output;
 }

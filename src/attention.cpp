@@ -203,8 +203,13 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
     auto scores = Utils::matmul(query, Utils::transpose(key));
     cout << "QK^T (scores matrix, shape: " << scores.size() << " x " << scores[0].size() << "):\n";
     Utils::print_matrix(scores);
-    cout << "Each row in this matrix corresponds to a token's query, "
-         << "and each column represents its dot product similarity with other tokens' keys.\n";
+    cout << "Each element in this matrix represents the dot product similarity between a query vector (row) and a key vector (column).\n";
+    cout << "For example:\n";
+    cout << "  - scores[0][0] = dot product of Q[0] and K[0] (similarity between token 1's query and token 1's key).\n";
+    cout << "  - scores[0][1] = dot product of Q[0] and K[1] (similarity between token 1's query and token 2's key).\n";
+    cout << "  - scores[1][2] = dot product of Q[1] and K[2] (similarity between token 2's query and token 3's key).\n";
+    cout << "Each row represents the similarity of a specific token's query with all tokens' keys, "
+         << "and each column represents the similarity of all queries with a specific token's key.\n";
 
     // 2. Scale scores by sqrt(d_k)
     cout << "\nStep 2: Scale scores by sqrt(d_k)\n";

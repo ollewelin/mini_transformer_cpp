@@ -253,6 +253,146 @@ defines the number of rows in the matrix, representing the number of unique toke
 defines the number of columns, representing the size of each token's embedding vector.
 The matrix acts as a lookup table, converting token IDs into dense vector representations.
 
+## attention class
+The center of the tranformer seem to be the attention block for in my view. It's lot of matrix multiplication used here.
+
+I was made a print out test of one single attention layer with one single attention head.
+You can "un-comment" the line
+
+        #define PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION
+
+at
+
+        config.h
+
+To enable this test print out of attention mechanism:
+
+```
+==================== Test: Single Attention Layer ====================
+Matrix sizes are valid.
+The resolution of the positional encoding and embedding space, d_model: 4
+Attention weights for layer 0 initialized with random values.
+Randomized attention weights for layer 0 saved to files.
+
+=== Relationship Between d_model, num_heads, and Matrix Dimensions ===
+d_model (total embedding dimension): 4
+num_heads (number of attention heads): 1
+d_k (key/query dimension per head): 4
+d_v (value dimension per head): 4
+
+Explanation:
+- The total embedding dimension (d_model) is divided among all attention heads.
+- With num_heads = 1, each head gets the full d_model, so d_k = d_model / num_heads = 4.
+- Similarly, d_v = d_model / num_heads = 4.
+In this case, each token is represented with 4 dimensions in Q and K, and 4 dimensions in V.
+
+=== Hard coded Test Input Matrices ===
+
+Input Q (Query):
+[
+  [1.0000, 0.5000, 0.1000, 0.0100]
+  [0.2000, 1.3000, 0.2000, 0.0200]
+  [1.2000, 2.3000, 3.2000, 4.1100]
+]
+Each row represents a token, and each column represents one of the 4 dimensions of the query vector.
+
+Input K (Key):
+[
+  [0.8000, 0.3000, 0.3000, 0.0300]
+  [0.1000, 0.9000, 0.4000, 0.0400]
+  [0.2000, 0.3000, 3.0000, 1.1100]
+]
+Each row represents a token, and each column represents one of the 4 dimensions of the key vector.
+
+Input V (Value):
+[
+  [1.2000, 0.7000, 0.5000, 0.0500]
+  [0.5000, 0.4000, 0.6000, 0.0600]
+  [2.2000, 1.3000, 0.0000, 3.1100]
+]
+Each row represents a token, and each column represents one of the 4 dimensions of the value vector.
+
+Summary:
+- Q and K have 4 columns because they encode positional and content-related similarities.
+- V has 4 columns because it contains the actual token content to be weighted and combined.
+=====================================================================
+
+=== Scaled Dot-Product Attention Debug Output ===
+
+Step 1: Compute QK^T
+Query (Q) matrix (shape: 3 x 4):
+[
+  [1.0000, 0.5000, 0.1000, 0.0100]
+  [0.2000, 1.3000, 0.2000, 0.0200]
+  [1.2000, 2.3000, 3.2000, 4.1100]
+]
+Key (K) matrix (shape: 3 x 4):
+[
+  [0.8000, 0.3000, 0.3000, 0.0300]
+  [0.1000, 0.9000, 0.4000, 0.0400]
+  [0.2000, 0.3000, 3.0000, 1.1100]
+]
+QK^T (scores matrix, shape: 3 x 3):
+[
+  [0.9803, 0.5904, 0.6611]
+  [0.6106, 1.2708, 1.0522]
+  [2.7333, 3.6344, 15.0921]
+]
+Each row in this matrix corresponds to a token's query, and each column represents its dot product similarity with other tokens' keys.
+
+Step 2: Scale scores by sqrt(d_k)
+Scaling factor (sqrt(d_k)): 2.0000
+Scaled scores matrix:
+[
+  [0.4902, 0.2952, 0.3306]
+  [0.3053, 0.6354, 0.5261]
+  [1.3667, 1.8172, 7.5461]
+]
+Each score is scaled to adjust for the dimensionality of the key vectors.
+
+Step 3: Apply masking to prevent attending to future tokens
+Masked scores matrix:
+[
+  [0.4902, -inf, -inf]
+  [0.3053, 0.6354, -inf]
+  [1.3667, 1.8172, 7.5461]
+]
+This matrix shows the scores after applying a mask to ensure that a token only attends to itself and earlier tokens.
+
+Step 4: Apply softmax to scores
+Softmax applied (attention weights):
+[
+  [1.0000, 0.0000, 0.0000]
+  [0.4182, 0.5818, 0.0000]
+  [0.0021, 0.0032, 0.9947]
+]
+Each row represents the attention distribution for a token. The values sum to 1, showing how much each token attends to other tokens.
+
+Step 5: Multiply scores with Value (V) matrix
+Value (V) matrix (shape: 3 x 4):
+[
+  [1.2000, 0.7000, 0.5000, 0.0500]
+  [0.5000, 0.4000, 0.6000, 0.0600]
+  [2.2000, 1.3000, 0.0000, 3.1100]
+]
+Output matrix (shape: 3 x 4):
+[
+  [1.2000, 0.7000, 0.5000, 0.0500]
+  [0.7928, 0.5255, 0.5582, 0.0558]
+  [2.1924, 1.2959, 0.0030, 3.0938]
+]
+Each row in the output matrix corresponds to the weighted sum of value vectors for each token, based on its attention distribution.
+=== End of Debug Output ===
+Output from Attention Layer:
+[
+  [1.2000, 0.7000, 0.5000, 0.0500]
+  [0.7928, 0.5255, 0.5582, 0.0558]
+  [2.1924, 1.2959, 0.0030, 3.0938]
+]
+=====================================================================
+
+```
+
 
 
 

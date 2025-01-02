@@ -17,7 +17,6 @@ using namespace std;
 int main() {
 cout << "========================================================================================================" << endl;
 cout << "Transformer Test in Mini Format (C/C++) - No Use of ML Libraries" << endl;
-cout << "This mini Transformer project is heavily guided and inspired by AI-powered assistance (Transformer LLM)." << endl;
 cout << "The goal is to build and understand the Transformer algorithm from scratch using pure C++." << endl;
 cout << "========================================================================================================" << endl;
 cout << endl;

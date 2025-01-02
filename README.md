@@ -14,6 +14,7 @@ Transformer Test in Mini Format (C/C++) - No Use of ML Libraries. This mini Tran
 transformer_project/
 ├── src/
 │   ├── main.cpp            # Entry point for the application
+│   ├── config.cpp
 │   ├── transformer.cpp     # Implementation of the Transformer
 │   ├── attention.cpp       # Implementation of the attention mechanism
 │   ├── feed_forward.cpp    # Implementation of the feed-forward network
@@ -22,7 +23,7 @@ transformer_project/
 │   └── utils.cpp           # Helper functions
 ├── include/
 │   ├── transformer.h
-│   ├── config.h            # Only contain preprocessor directives (Global preprocessor directives) etc 
+│   ├── config.h            # Contain preprocessor directives (Global preprocessor directives) and Global variables 
 │   ├── attention.h
 │   ├── feed_forward.h
 │   ├── embedding.h

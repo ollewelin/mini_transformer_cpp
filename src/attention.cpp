@@ -131,11 +131,17 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
     auto V = Utils::matmul(value, weights_v); // Value * weights_v
 
     // 2. Scaled dot-product attention
+#ifndef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION     
     auto attention_output = scaled_dot_product_attention(Q, K, V);
+#else
+    auto attention_output = scaled_dot_product_attention_with_printout(Q, K, V);
+#endif
 
     return attention_output;
 }
 
+
+#ifndef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION  
 std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention(
     const std::vector<std::vector<float>> &query,
     const std::vector<std::vector<float>> &key,
@@ -176,3 +182,85 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
     auto output = Utils::matmul(scores, value);
     return output;
 }
+
+#else // Use of PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION in config.h
+std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention_with_printout(
+    const std::vector<std::vector<float>> &query,
+    const std::vector<std::vector<float>> &key,
+    const std::vector<std::vector<float>> &value)
+{
+    using namespace std;
+
+    cout << "\n=== Scaled Dot-Product Attention Debug Output ===\n";
+
+    // 1. Compute QK^T
+    cout << "\nStep 1: Compute QK^T\n";
+    cout << "Query (Q) matrix (shape: " << query.size() << " x " << query[0].size() << "):\n";
+    Utils::print_matrix(query); // Assuming Utils has a method to print matrices
+    cout << "Key (K) matrix (shape: " << key.size() << " x " << key[0].size() << "):\n";
+    Utils::print_matrix(key);
+
+    auto scores = Utils::matmul(query, Utils::transpose(key));
+    cout << "QK^T (scores matrix, shape: " << scores.size() << " x " << scores[0].size() << "):\n";
+    Utils::print_matrix(scores);
+    cout << "Each row in this matrix corresponds to a token's query, "
+         << "and each column represents its dot product similarity with other tokens' keys.\n";
+
+    // 2. Scale scores by sqrt(d_k)
+    cout << "\nStep 2: Scale scores by sqrt(d_k)\n";
+    float scale_factor = std::sqrt(static_cast<float>(key[0].size()));
+    cout << "Scaling factor (sqrt(d_k)): " << scale_factor << endl;
+    for (size_t i = 0; i < scores.size(); ++i)
+    {
+        for (size_t j = 0; j < scores[0].size(); ++j)
+        {
+            scores[i][j] /= scale_factor;
+        }
+    }
+    cout << "Scaled scores matrix:\n";
+    Utils::print_matrix(scores);
+    cout << "Each score is scaled to adjust for the dimensionality of the key vectors.\n";
+    
+    // 3. Apply masking to prevent attending to future tokens
+    cout << "\nStep 3: Apply masking to prevent attending to future tokens\n";
+    for (size_t i = 0; i < scores.size(); ++i)
+    {
+        for (size_t j = 0; j < scores[i].size(); ++j)
+        {
+            if (j > i) // Mask future positions
+            {
+                scores[i][j] = -std::numeric_limits<float>::infinity();
+            }
+        }
+    }
+    cout << "Masked scores matrix:\n";
+    Utils::print_matrix(scores);
+    cout << "This matrix shows the scores after applying a mask to ensure that a token only attends to itself and earlier tokens.\n";
+
+    // 4. Apply softmax to scores
+    cout << "\nStep 4: Apply softmax to scores\n";
+    for (size_t i = 0; i < scores.size(); ++i)
+    {
+        scores[i] = Utils::softmax(scores[i]);
+    }
+    cout << "Softmax applied (attention weights):\n";
+    Utils::print_matrix(scores);
+    cout << "Each row represents the attention distribution for a token. "
+         << "The values sum to 1, showing how much each token attends to other tokens.\n";
+
+    // 5. Multiply scores with V
+    cout << "\nStep 5: Multiply scores with Value (V) matrix\n";
+    cout << "Value (V) matrix (shape: " << value.size() << " x " << value[0].size() << "):\n";
+    Utils::print_matrix(value);
+
+    auto output = Utils::matmul(scores, value);
+    cout << "Output matrix (shape: " << output.size() << " x " << output[0].size() << "):\n";
+    Utils::print_matrix(output);
+    cout << "Each row in the output matrix corresponds to the weighted sum of value vectors "
+         << "for each token, based on its attention distribution.\n";
+
+
+    cout << "=== End of Debug Output ===\n";
+    return output;
+}
+#endif

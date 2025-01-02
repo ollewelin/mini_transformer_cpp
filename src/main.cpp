@@ -10,6 +10,9 @@ using namespace std;
 #include "attention.h"
 #include "utils.h"
 #endif
+#ifdef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION
+#include "utils.h"
+#endif
 
 int main() {
 cout << "========================================================================================================" << endl;
@@ -18,6 +21,81 @@ cout << "This mini Transformer project is heavily guided and inspired by AI-powe
 cout << "The goal is to build and understand the Transformer algorithm from scratch using pure C++." << endl;
 cout << "========================================================================================================" << endl;
 cout << endl;
+
+#ifdef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION
+    // Make some PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION with small input matrix tests 
+    // to understand one single layer of attention head in operation.
+    cout << "==================== Test: Single Attention Layer ====================\n";
+
+    // Input matrices
+    std::vector<std::vector<float>> Q = {
+        {1.0, 0.5, 0.1, 0.01}, // Query vector for token 1
+        {0.2, 1.3, 0.2, 0.02}, // Query vector for token 2
+        {1.2, 2.3, 3.2, 4.11}  // Query vector for token 3
+    };
+    std::vector<std::vector<float>> K = {
+        {0.8, 0.3, 0.3, 0.03}, // Key vector for token 1
+        {0.1, 0.9, 0.4, 0.04}, // Key vector for token 2
+        {0.2, 0.3, 3.0, 1.11}  // Key vector for token 3
+    };
+    std::vector<std::vector<float>> V = {
+        {1.2, 0.7, 0.5, 0.05}, // Value vector for token 1
+        {0.5, 0.4, 0.6, 0.06}, // Value vector for token 2
+        {2.2, 1.3, 0.0, 3.11}  // Value vector for token 3
+    };
+
+    // Check matrix sizes using Utils
+    Utils::check_matrices(Q, K, V);
+
+    // Simplified test setup
+    
+    int d_model_test = Q[0].size();               // Total embedding dimension
+    int num_heads_test = 1;                  // Number of attention heads
+    int d_k = d_model_test / num_heads_test; // Dimensionality of Q and K
+    int d_v = d_model_test / num_heads_test; // Dimensionality of V
+
+    cout << "The resolution of the positional encoding and embedding space, d_model: " << d_model_test << endl;
+    MultiHeadAttention attention_layer_printout(d_model_test, 1, false, 0); // d_model=4, num_heads=1, no load, layer_index=0
+
+    cout << "\n=== Relationship Between d_model, num_heads, and Matrix Dimensions ===\n";
+    cout << "d_model (total embedding dimension): " << d_model_test << "\n";
+    cout << "num_heads (number of attention heads): " << num_heads_test << "\n";
+    cout << "d_k (key/query dimension per head): " << d_k << "\n";
+    cout << "d_v (value dimension per head): " << d_v << "\n";
+
+    cout << "\nExplanation:\n";
+    cout << "- The total embedding dimension (d_model) is divided among all attention heads.\n";
+    cout << "- With num_heads = 1, each head gets the full d_model, so d_k = d_model / num_heads = " << d_k << ".\n";
+    cout << "- Similarly, d_v = d_model / num_heads = " << d_v << ".\n";
+    cout << "In this case, each token is represented with " << d_k << " dimensions in Q and K, and "
+         << d_v << " dimensions in V.\n";
+
+    cout << "\n=== Hard coded Test Input Matrices ===\n";
+
+    // Print matrices
+    cout << "\nInput Q (Query):\n";
+    Utils::print_matrix(Q);
+    cout << "Each row represents a token, and each column represents one of the " << d_k << " dimensions of the query vector.\n";
+
+    cout << "\nInput K (Key):\n";
+    Utils::print_matrix(K);
+    cout << "Each row represents a token, and each column represents one of the " << d_k << " dimensions of the key vector.\n";
+
+    cout << "\nInput V (Value):\n";
+    Utils::print_matrix(V);
+    cout << "Each row represents a token, and each column represents one of the " << d_v << " dimensions of the value vector.\n";
+
+    cout << "\nSummary:\n";
+    cout << "- Q and K have " << d_k << " columns because they encode positional and content-related similarities.\n";
+    cout << "- V has " << d_v << " columns because it contains the actual token content to be weighted and combined.\n";
+    cout << "=====================================================================\n";
+    
+    // Call scaled_dot_product_attention_with_printout for testing
+    auto attention_output_printout = attention_layer_printout.scaled_dot_product_attention_with_printout(Q, K, V);
+
+    cout << "=====================================================================\n";
+
+#else
 
     // Define parameters
     int vocab_size = 5000;
@@ -60,6 +138,8 @@ cout << endl;
     } else {
         load_parameters_yes_no = false; // Random initialization
     }
+
+
 
 #ifdef TEST_UTILS
 
@@ -149,6 +229,9 @@ cout << endl;
     }
 #endif
 
+
+
+
     // Create transformer
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
     
@@ -170,6 +253,9 @@ cout << endl;
         }
         std::cout << "\n";
     }
+#endif
+
     return 0;
+
 }
 

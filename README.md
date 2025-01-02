@@ -335,7 +335,12 @@ QK^T (scores matrix, shape: 3 x 3):
   [0.6106, 1.2708, 1.0522]
   [2.7333, 3.6344, 15.0921]
 ]
-Each row in this matrix corresponds to a token's query, and each column represents its dot product similarity with other tokens' keys.
+Each element in this matrix represents the dot product similarity between a query vector (row) and a key vector (column).
+For example:
+  - scores[0][0] = dot product of Q[0] and K[0] (similarity between token 1's query and token 1's key).
+  - scores[0][1] = dot product of Q[0] and K[1] (similarity between token 1's query and token 2's key).
+  - scores[1][2] = dot product of Q[1] and K[2] (similarity between token 2's query and token 3's key).
+Each row represents the similarity of a specific token's query with all tokens' keys, and each column represents the similarity of all queries with a specific token's key.
 
 Step 2: Scale scores by sqrt(d_k)
 Scaling factor (sqrt(d_k)): 2.0000

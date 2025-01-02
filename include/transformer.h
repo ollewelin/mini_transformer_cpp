@@ -7,6 +7,7 @@
 #include "attention.h"
 #include "feed_forward.h"
 #include <iostream>
+#include "config.h"
 class Transformer
 {
 public:

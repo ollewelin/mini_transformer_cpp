@@ -2,6 +2,7 @@
 #define EMBEDDING_H
 
 #include <vector>
+#include "config.h"
 
 class Embedding {
 public:

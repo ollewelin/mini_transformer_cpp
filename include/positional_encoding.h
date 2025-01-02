@@ -2,7 +2,7 @@
 #define POSITIONAL_ENCODING_H
 
 #include <vector>
-
+#include "config.h"
 class PositionalEncoding {
 public:
     PositionalEncoding(int max_len, int d_model); // Constructor

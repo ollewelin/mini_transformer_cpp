@@ -11,18 +11,31 @@ public:
         const std::vector<std::vector<float>>& key,
         const std::vector<std::vector<float>>& value);
 
-private:
 #ifdef TEST_ATTENTION
-public:    
+public:
+#else
+    #ifdef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION
+    public:
+    #else
+    private:
+    #endif
 #endif
+
     std::vector<std::vector<float>> scaled_dot_product_attention(
         const std::vector<std::vector<float>>& query,
         const std::vector<std::vector<float>>& key,
         const std::vector<std::vector<float>>& value);
 
+#ifdef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION
+    std::vector<std::vector<float>> scaled_dot_product_attention_with_printout(
+        const std::vector<std::vector<float>>& query,
+        const std::vector<std::vector<float>>& key,
+        const std::vector<std::vector<float>>& value);
+#endif
     std::vector<std::vector<float>> weights_q; // Query weights
     std::vector<std::vector<float>> weights_k; // Key weights
     std::vector<std::vector<float>> weights_v; // Value weights
+
 };
 
 #endif // ATTENTION_H

@@ -1,4 +1,5 @@
 #include <vector>
+#include "config.h"
 class FeedForward {
 public:
     FeedForward(int d_model, int d_ff);

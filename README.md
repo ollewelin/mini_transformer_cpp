@@ -1,8 +1,5 @@
 # Tutorial code for C/C++ Transformer "mini_transformer_cpp"
-## Note code AI-powered assistance:
-This code is inspired by AI-powered assistance.
 
-## Creater tweeks:
 I have done lot's of tweeks to focus on understand this transformer algorithm in C/C++ perspective and also generate print outs and graphs down the road to understand the code and the transformer algorithm.
 
 ### Overview and purpose:

@@ -383,12 +383,6 @@ Output matrix (shape: 3 x 4):
 ]
 Each row in the output matrix corresponds to the weighted sum of value vectors for each token, based on its attention distribution.
 === End of Debug Output ===
-Output from Attention Layer:
-[
-  [1.2000, 0.7000, 0.5000, 0.0500]
-  [0.7928, 0.5255, 0.5582, 0.0558]
-  [2.1924, 1.2959, 0.0030, 3.0938]
-]
 =====================================================================
 
 ```

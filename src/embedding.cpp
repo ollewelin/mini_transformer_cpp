@@ -43,18 +43,19 @@ Embedding::Embedding(int vocab_size, int d_model, bool load_parameters_yes_no) {
         }
     }
     std::cout << "Embedding matrix initialized with random values." << std::endl;
+}
 
-    // Save the randomized embedding matrix to a binary file
+void Embedding::save_embedding_matrix() {
     std::ofstream save_file(embed_matrix_file_name, std::ios::binary);
     if (!save_file.is_open()) {
         std::cerr << "Error: Could not open file " << embed_matrix_file_name << " for saving embeddings." << std::endl;
         exit(EXIT_FAILURE);
     }
-    for (int i = 0; i < vocab_size; ++i) {
-        save_file.write(reinterpret_cast<const char*>(embedding_matrix[i].data()), d_model * sizeof(float));
+    for (const auto& row : embedding_matrix) {
+        save_file.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
     }
     save_file.close();
-    std::cout << "Randomized embedding matrix saved to file: " << embed_matrix_file_name << std::endl;
+    std::cout << "Embedding matrix saved to file: " << embed_matrix_file_name << std::endl;
 }
 
 // Forward pass

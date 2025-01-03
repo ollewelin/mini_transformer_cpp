@@ -6,14 +6,18 @@
 #include <iostream> // For std::cout and std::endl
 #include <fstream>  // For file I/O
 
+const std::string MultiHeadAttention::file_prefix_attention_weights_q_layer_ = "attention_weights_q_layer_";
+const std::string MultiHeadAttention::file_prefix_attention_weights_k_layer_ = "attention_weights_k_layer_";
+const std::string MultiHeadAttention::file_prefix_attention_weights_v_layer_ = "attention_weights_v_layer_";
+
 MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_parameters_yes_no, int layer_index)
     : weights_q(d_model, std::vector<float>(d_model, 0.0)),
       weights_k(d_model, std::vector<float>(d_model, 0.0)),
       weights_v(d_model, std::vector<float>(d_model, 0.0))
 {
-    const std::string weights_q_file = "attention_weights_q_layer_" + std::to_string(layer_index) + ".bin";
-    const std::string weights_k_file = "attention_weights_k_layer_" + std::to_string(layer_index) + ".bin";
-    const std::string weights_v_file = "attention_weights_v_layer_" + std::to_string(layer_index) + ".bin";
+    const std::string weights_q_file = file_prefix_attention_weights_q_layer_ + std::to_string(layer_index) + ".bin";
+    const std::string weights_k_file = file_prefix_attention_weights_k_layer_ + std::to_string(layer_index) + ".bin";
+    const std::string weights_v_file = file_prefix_attention_weights_v_layer_ + std::to_string(layer_index) + ".bin";
 
     bool loaded = false;
 
@@ -67,30 +71,6 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_par
 
         std::cout << "Attention weights for layer " << layer_index << " initialized with random values." << std::endl;
 
-        // Save the randomized weights to binary files
-        std::ofstream save_file_q(weights_q_file, std::ios::binary);
-        std::ofstream save_file_k(weights_k_file, std::ios::binary);
-        std::ofstream save_file_v(weights_v_file, std::ios::binary);
-
-        if (save_file_q.is_open() && save_file_k.is_open() && save_file_v.is_open()) {
-            for (const auto& row : weights_q) {
-                save_file_q.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
-            }
-            for (const auto& row : weights_k) {
-                save_file_k.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
-            }
-            for (const auto& row : weights_v) {
-                save_file_v.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
-            }
-            save_file_q.close();
-            save_file_k.close();
-            save_file_v.close();
-
-            std::cout << "Randomized attention weights for layer " << layer_index << " saved to files." << std::endl;
-        } else {
-            std::cerr << "Error: Could not save attention weights for layer " << layer_index << " to files." << std::endl;
-            exit(EXIT_FAILURE);
-        }
     }
 #ifdef PRINT_OUT_INIT_VECTORS
     // Print a few rows of weights_q, weights_k, and weights_v
@@ -119,6 +99,37 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_par
     }
 #endif
 }
+
+void MultiHeadAttention::save_weights(int layer_index) {
+    const std::string weights_q_file = file_prefix_attention_weights_q_layer_ + std::to_string(layer_index) + ".bin";
+    const std::string weights_k_file = file_prefix_attention_weights_k_layer_ + std::to_string(layer_index) + ".bin";
+    const std::string weights_v_file = file_prefix_attention_weights_v_layer_ + std::to_string(layer_index) + ".bin";
+    
+    std::ofstream save_file_q(weights_q_file, std::ios::binary);
+    std::ofstream save_file_k(weights_k_file, std::ios::binary);
+    std::ofstream save_file_v(weights_v_file, std::ios::binary);
+
+    if (save_file_q.is_open() && save_file_k.is_open() && save_file_v.is_open()) {
+        for (const auto& row : weights_q) {
+            save_file_q.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
+        }
+        for (const auto& row : weights_k) {
+            save_file_k.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
+        }
+        for (const auto& row : weights_v) {
+            save_file_v.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
+        }
+        save_file_q.close();
+        save_file_k.close();
+        save_file_v.close();
+
+        std::cout << "Attention weights for layer " << layer_index << " saved to files." << std::endl;
+    } else {
+        std::cerr << "Error: Could not save attention weights for layer " << layer_index << " to files." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+}
+
 
 std::vector<std::vector<float>> MultiHeadAttention::forward(
     const std::vector<std::vector<float>> &query,

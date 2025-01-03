@@ -276,10 +276,14 @@ int main() {
 
     // Forward pass
     auto output = transformer.forward(input);
-    
+    transformer.save_layer_norm_weights();
+    transformer.save_embedding_matrix();
+    transformer.save_attention_weights();
+    transformer.save_feed_forward_weights();
+
     // Print output
     for (const auto& row : output) {
-        
+
         for (float val : row) {
             std::cout << val << " ";
         }

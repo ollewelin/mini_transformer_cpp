@@ -1,11 +1,11 @@
 #include "feed_forward.h"
 #include "utils.h"
-
+const std::string FeedForward::file_prefix_feed_forward_weights = "ffd_weight_layer_";
 FeedForward::FeedForward(int d_model, int d_ff, bool load_parameters_yes_no, int layer_index)
     : weights1(d_model, std::vector<float>(d_ff, 0.0f)),
       weights2(d_ff, std::vector<float>(d_model, 0.0f))
 {
-    const std::string weights_file = "ffd_weight_layer_" + std::to_string(layer_index) + ".bin";
+    const std::string weights_file = file_prefix_feed_forward_weights + std::to_string(layer_index) + ".bin";
     bool loaded = false;
 
     if (load_parameters_yes_no) {
@@ -45,24 +45,26 @@ FeedForward::FeedForward(int d_model, int d_ff, bool load_parameters_yes_no, int
                 val = scale2 * (static_cast<float>(std::rand()) / RAND_MAX - 0.5f) * 2.0f;
             }
         }
-
-        std::ofstream file(weights_file, std::ios::binary);
-        if (file.is_open()) {
-            for (const auto& row : weights1) {
-                file.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
-            }
-            for (const auto& row : weights2) {
-                file.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
-            }
-            file.close();
-            std::cout << "FeedForward weights for layer " << layer_index << " initialized and saved to file.\n";
-        } else {
-            std::cerr << "Error: Could not save FeedForward weights to file.\n";
-            exit(EXIT_FAILURE);
-        }
     }
 }
 
+void FeedForward::save_weights(int layer_index) {
+    const std::string weights_file = file_prefix_feed_forward_weights + std::to_string(layer_index) + ".bin";
+    std::ofstream file(weights_file, std::ios::binary);
+    if (file.is_open()) {
+        for (const auto& row : weights1) {
+            file.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
+        }
+        for (const auto& row : weights2) {
+            file.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
+        }
+        file.close();
+        std::cout << "FeedForward weights for layer " << layer_index << " initialized and saved to file.\n";
+    } else {
+        std::cerr << "Error: Could not save FeedForward weights to file.\n";
+        exit(EXIT_FAILURE);
+    }
+}
 std::vector<std::vector<float>> FeedForward::forward(const std::vector<std::vector<float>>& input)
 {
     // Step 1: Linear transformation with weights1

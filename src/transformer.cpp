@@ -12,6 +12,24 @@ std::vector<std::vector<float>> Transformer::add_matrices(const std::vector<std:
     }
     return result;
 }
+void Transformer::save_embedding_matrix()
+{
+    embedding.save_embedding_matrix();
+}
+void Transformer::save_attention_weights()
+{
+    for(int i=0;i<num_layers_local;i++)
+    {
+        attention_layers[i].save_weights(i);
+    }
+}
+void Transformer::save_feed_forward_weights()
+{
+    for (int i = 0; i < num_layers_local; i++)
+    {
+        feed_forward_layers[i].save_weights(i);
+    }
+}
 
 std::vector<std::vector<float>> Transformer::layer_normalize(const std::vector<std::vector<float>> &input, size_t layer_index) {
     std::vector<std::vector<float>> output = input;

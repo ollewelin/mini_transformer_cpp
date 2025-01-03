@@ -175,9 +175,6 @@ int main() {
     int num_layers = 6;
     int max_len = 64; // Maximum sequence length (number of tokens in a single input)
 
-
-
-
 #ifdef TEST_UTILS
 
     cout << "Test utils functions here: " << endl;
@@ -266,9 +263,6 @@ int main() {
     }
 #endif
 
-
-
-
     // Create transformer
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
     
@@ -285,6 +279,7 @@ int main() {
     
     // Print output
     for (const auto& row : output) {
+        
         for (float val : row) {
             std::cout << val << " ";
         }

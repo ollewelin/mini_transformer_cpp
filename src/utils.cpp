@@ -19,6 +19,7 @@ std::vector<std::vector<float>> Utils::leaky_relu(const std::vector<std::vector<
     return output;
 }
 
+
 namespace Utils {
 
     // Function to check matrix dimensions

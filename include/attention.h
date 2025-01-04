@@ -5,6 +5,8 @@
 #include <iostream> // For std::cout and std::endl
 #include <fstream>  // For file I/O
 
+
+
     
 class MultiHeadAttention {
 public:
@@ -12,7 +14,9 @@ public:
     std::vector<std::vector<float>> forward(
         const std::vector<std::vector<float>>& query,
         const std::vector<std::vector<float>>& key,
-        const std::vector<std::vector<float>>& value);
+        const std::vector<std::vector<float>>& value,
+        const std::vector<int>& padding_mask
+        );
     
     // Save weights to binary files
     void save_weights(int layer_index);
@@ -30,7 +34,9 @@ public:
     std::vector<std::vector<float>> scaled_dot_product_attention(
         const std::vector<std::vector<float>>& query,
         const std::vector<std::vector<float>>& key,
-        const std::vector<std::vector<float>>& value);
+        const std::vector<std::vector<float>>& value,
+        const std::vector<int>& padding_mask // Padding when input tokens lengh is less then max_len
+);
 
 #ifdef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION
     std::vector<std::vector<float>> scaled_dot_product_attention_with_printout(

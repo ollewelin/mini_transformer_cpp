@@ -52,7 +52,7 @@ public:
 
         std::cout << "Transformer initialized with " << num_layers << " layers." << std::endl;
     };
-    std::vector<std::vector<float>> forward(const std::vector<int> &input);//Overall tranformer operation function
+    std::vector<std::vector<float>> forward(const std::vector<int>& input, const std::vector<int>& padding_mask);//Overall tranformer operation function
     void save_layer_norm_weights();// Saving Layer Normalization weights
     void save_embedding_matrix();
     void save_attention_weights();

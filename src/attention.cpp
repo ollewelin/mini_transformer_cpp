@@ -130,11 +130,11 @@ void MultiHeadAttention::save_weights(int layer_index) {
     }
 }
 
-
 std::vector<std::vector<float>> MultiHeadAttention::forward(
     const std::vector<std::vector<float>> &query,
     const std::vector<std::vector<float>> &key,
-    const std::vector<std::vector<float>> &value)
+    const std::vector<std::vector<float>> &value,
+    const std::vector<int>& padding_mask)
 {
     // 1. Linear transformations for Q, K, V
     auto Q = Utils::matmul(query, weights_q); // Query * weights_q
@@ -143,7 +143,7 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
 
     // 2. Scaled dot-product attention
 #ifndef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION     
-    auto attention_output = scaled_dot_product_attention(Q, K, V);
+    auto attention_output = scaled_dot_product_attention(Q, K, V, padding_mask);
 #else
     auto attention_output = scaled_dot_product_attention_with_printout(Q, K, V);
 #endif
@@ -156,7 +156,8 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
 std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention(
     const std::vector<std::vector<float>> &query,
     const std::vector<std::vector<float>> &key,
-    const std::vector<std::vector<float>> &value)
+    const std::vector<std::vector<float>> &value,
+    const std::vector<int>& padding_mask)
 {
     // 1. Compute QK^T
     auto scores = Utils::matmul(query, Utils::transpose(key));
@@ -172,12 +173,10 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
     }
 
     // 3. Apply masking to prevent attending to future tokens
-    for (size_t i = 0; i < scores.size(); ++i)
-    {
-        for (size_t j = 0; j < scores[i].size(); ++j)
-        {
-            if (j > i) // Mask future positions
-            {
+    // Apply masking to prevent attending to future tokens and padding
+    for (size_t i = 0; i < scores.size(); ++i) {
+        for (size_t j = 0; j < scores[i].size(); ++j) {
+            if (j > i || padding_mask[j] == 0) { // Future tokens or padding tokens
                 scores[i][j] = -std::numeric_limits<float>::infinity();
             }
         }

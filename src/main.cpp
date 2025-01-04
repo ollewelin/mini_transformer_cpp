@@ -229,6 +229,8 @@ int main() {
     vector<vector<float>> query = {{1.0, 0.0}, {0.0, 1.0}};
     vector<vector<float>> key = {{1.0, 2.0}, {0.0, 3.0}};
     vector<vector<float>> value = {{4.0, 5.0}, {6.0, 7.0}};
+    // Padding mask
+    std::vector<int> padding_mask_test = {1, 1, 1};
 
     // Initialize MultiHeadAttention with 2 dimensions and 1 head (simplest case)
     MultiHeadAttention attention(2, 1, load_parameters_yes_no, num_layers);
@@ -240,7 +242,7 @@ int main() {
 
     // Test Scaled Dot-Product Attention
     cout << "\nTesting Scaled Dot-Product Attention:" << endl;
-    auto attention_output = attention.scaled_dot_product_attention(query, key, value);
+    auto attention_output = attention.scaled_dot_product_attention(query, key, value, padding_mask_test);
 
     cout << "Attention Output:" << endl;
     for (const auto& row : attention_output) {
@@ -252,7 +254,7 @@ int main() {
 
     // Test Full Forward Pass
     cout << "\nTesting Full Forward Pass:" << endl;
-    auto forward_output = attention.forward(query, key, value);
+    auto forward_output = attention.forward(query, key, value, padding_mask_test);
 
     cout << "Forward Output:" << endl;
     for (const auto& row : forward_output) {
@@ -297,27 +299,42 @@ int main() {
 
     //================ Set up the transformer ===============
     vocab_size = vocab.size(); // Dynamically set to the actual vocabulary size
+    d_model = 16;
     // Create transformer
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
-    
-    // Sample input (token IDs)
-    std::vector<int> input = {1, 2, 3, 4, 5};
 
-    if (input.size() > (unsigned int)max_len) {
+    // Input with padding
+    std::vector<int> input = {1, 2, 3, 0, 0}; // Tokens with [PAD]
+
+    // Padding mask
+    std::vector<int> padding_mask = {1, 1, 1, 0, 0};
+
+    if (input.size() > (unsigned int)max_len)
+    {
         std::cerr << "Error: Input sequence length exceeds maximum allowed length of " << max_len << "." << std::endl;
         return 1;
     }
 
-    // Forward pass
-    auto output = transformer.forward(input);
+    std::cout << "input vector : ";
+    for (int val : input) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
 
+    // Forward pass
+    auto output = transformer.forward(input, padding_mask);
 
     // Print output
+    int row_nr=0;
+    int col_nr=0;
     for (const auto& row : output) {
-
+        std::cout << "output Row: " << row_nr << endl;
+        row_nr++;
         for (float val : row) {
-            std::cout << val << " ";
+            std::cout << " col_nr: " << col_nr << " data: "<< val <<endl;
+            col_nr++;
         }
+        std::cout << "\n";
         std::cout << "\n";
     }
 

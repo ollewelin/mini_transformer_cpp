@@ -77,7 +77,7 @@ void Transformer::save_layer_norm_weights()
     }
 }
 
-std::vector<std::vector<float>> Transformer::forward(const std::vector<int> &input) {
+std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& input, const std::vector<int>& padding_mask) {
     // Step 1: Embedding and positional encoding
     std::vector<std::vector<float>> output = embedding.forward(input);
     output = pos_encoding.add_positional_encoding(output);
@@ -87,21 +87,22 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int> &inp
         // Save the input for residual connection
         auto residual = output;
 
-        // Apply MultiHeadAttention
-        output = attention_layers[i].forward(output, output, output); // Self-attention
+        // Apply MultiHeadAttention with padding mask
+        output = attention_layers[i].forward(output, output, output, padding_mask);// Self-attention
 
         // Add residual connection and apply layer normalization
-        output = layer_normalize(add_matrices(residual, output), i); // Residual + Attentions
+        output = layer_normalize(add_matrices(residual, output), i);// Residual + Attentions
 
         // Save the input for residual connection before FeedForward
         residual = output;
 
-        // Apply FeedForward (MLP)
+        // Apply FeedForward
         output = feed_forward_layers[i].forward(output);
 
         // Add residual connection and apply layer normalization
-        output = layer_normalize(add_matrices(residual, output), i); // Residual + FFN
+        output = layer_normalize(add_matrices(residual, output), i);// Residual + FFN
     }
 
     return output;
 }
+

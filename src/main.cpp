@@ -18,6 +18,89 @@ using namespace std;
 #include "feed_forward.h"
 #endif
 
+// Mean Pooling
+std::vector<float> mean_pooling(const std::vector<std::vector<float>>& output) {
+    std::vector<float> pooled(output[0].size(), 0.0f);
+    for (const auto& row : output) {
+        for (size_t i = 0; i < row.size(); ++i) {
+            pooled[i] += row[i];
+        }
+    }
+    for (float& val : pooled) {
+        val /= output.size();
+    }
+    return pooled;
+}
+//Final Classification Layer 
+std::vector<float> linear_layer(const std::vector<float>& input, const std::vector<std::vector<float>>& weights, const std::vector<float>& bias) {
+    std::vector<float> output(weights[0].size(), 0.0f);
+
+    for (size_t i = 0; i < weights[0].size(); ++i) { // For each output category
+        for (size_t j = 0; j < input.size(); ++j) {  // For each input dimension
+            output[i] += input[j] * weights[j][i];
+        }
+        output[i] += bias[i]; // Add bias term
+    }
+
+    return output;
+}
+//Final Classification Softmax Layer
+std::vector<float> softmax(const std::vector<float>& logits) {
+    std::vector<float> probabilities(logits.size());
+    float max_logit = *std::max_element(logits.begin(), logits.end()); // For numerical stability
+    float sum_exp = 0.0f;
+
+    for (float logit : logits) {
+        sum_exp += std::exp(logit - max_logit);
+    }
+
+    for (size_t i = 0; i < logits.size(); ++i) {
+        probabilities[i] = std::exp(logits[i] - max_logit) / sum_exp;
+    }
+
+    return probabilities;
+}
+#include <fstream>
+
+// Save function for the final layer
+void save_final_layer_weights(const std::vector<std::vector<float>>& weights, const std::vector<float>& bias) {
+    std::ofstream file("final_layer_weight.bin", std::ios::binary);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open file final_layer_weight.bin for saving." << std::endl;
+        return;
+    }
+
+    // Save weights
+    for (const auto& row : weights) {
+        file.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
+    }
+
+    // Save bias
+    file.write(reinterpret_cast<const char*>(bias.data()), bias.size() * sizeof(float));
+    file.close();
+    std::cout << "Final layer weights saved to final_layer_weight.bin." << std::endl;
+}
+
+// Load function for the final layer
+bool load_final_layer_weights(std::vector<std::vector<float>>& weights, std::vector<float>& bias) {
+    std::ifstream file("final_layer_weight.bin", std::ios::binary);
+    if (!file.is_open()) {
+        std::cerr << "Warning: Could not open file final_layer_weight.bin for loading. Falling back to random initialization." << std::endl;
+        return false;
+    }
+
+    // Load weights
+    for (auto& row : weights) {
+        file.read(reinterpret_cast<char*>(row.data()), row.size() * sizeof(float));
+    }
+
+    // Load bias
+    file.read(reinterpret_cast<char*>(bias.data()), bias.size() * sizeof(float));
+    file.close();
+    std::cout << "Final layer weights loaded from final_layer_weight.bin." << std::endl;
+    return true;
+}
+
 
 int main() {
     cout << "========================================================================================================" << endl;
@@ -300,6 +383,52 @@ int main() {
     //================ Set up the transformer ===============
     vocab_size = vocab.size(); // Dynamically set to the actual vocabulary size
     d_model = 6;
+    // Initialize final layer weights and bias
+
+    int num_categories = 2; // Number of output categories (Question/Answer)
+
+    std::vector<std::vector<float>> final_weights(d_model, std::vector<float>(num_categories, 0.0f));
+    std::vector<float> final_bias(num_categories, 0.0f);
+
+    if (load_parameters_yes_no)
+    {
+        if (!load_final_layer_weights(final_weights, final_bias))
+        {
+            // Fall back to random initialization if loading fails
+            std::srand(std::time(0));
+            for (auto &row : final_weights)
+            {
+                for (auto &val : row)
+                {
+                    val = static_cast<float>(std::rand()) / RAND_MAX; // Random values between 0 and 1
+                }
+            }
+            for (auto &val : final_bias)
+            {
+                val = static_cast<float>(std::rand()) / RAND_MAX;
+            }
+        }
+    }
+    else
+    {
+        // Random initialization
+        std::srand(std::time(0));
+        for (auto &row : final_weights)
+        {
+            for (auto &val : row)
+            {
+                val = static_cast<float>(std::rand()) / RAND_MAX;
+            }
+        }
+        for (auto &val : final_bias)
+        {
+            val = static_cast<float>(std::rand()) / RAND_MAX;
+        }
+    }
+
+
+
+
     // Create transformer
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
 
@@ -321,9 +450,30 @@ int main() {
     }
     std::cout << std::endl;
 
-    // Forward pass
+    // Forward pass through transformer
     auto output = transformer.forward(input, padding_mask);
 
+    // Reduce transformer output (e.g., by mean pooling or using the first token)
+    std::vector<float> pooled_output = mean_pooling(output);
+
+    // Apply final classification layer
+    std::vector<float> logits = linear_layer(pooled_output, final_weights, final_bias);
+    std::vector<float> probabilities = softmax(logits);
+
+    // Print probabilities
+    std::cout << "Probabilities: ";
+    for (float prob : probabilities) {
+        std::cout << prob << " ";
+    }
+    std::cout << std::endl;
+
+    // Save final layer weights (optional)
+    save_final_layer_weights(final_weights, final_bias);
+    transformer.save_layer_norm_weights();
+    transformer.save_embedding_matrix();
+    transformer.save_attention_weights();
+    transformer.save_feed_forward_weights();    
+/*
     // Print output
     int row_nr=0;
     int col_nr=0;
@@ -337,11 +487,8 @@ int main() {
         std::cout << "\n";
         std::cout << "\n";
     }
+*/
 
-    transformer.save_layer_norm_weights();
-    transformer.save_embedding_matrix();
-    transformer.save_attention_weights();
-    transformer.save_feed_forward_weights();
 #endif
 
     return 0;

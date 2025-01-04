@@ -13,6 +13,7 @@
 #include "attention.h"
 #include "feed_forward.h"
 #include "config.h"
+#include "utils.h"
 
 class Transformer
 {

@@ -28,6 +28,9 @@ namespace Utils {
 
     // Leaky ReLU for a matrix
     std::vector<std::vector<float>> leaky_relu(const std::vector<std::vector<float>>& input);
+
+    //mask padding
+    std::vector<std::vector<float>> mask_padding(const std::vector<std::vector<float>> &matrix, const std::vector<int> &padding_mask);
 };
 
 #endif // UTILS_H

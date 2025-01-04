@@ -90,8 +90,14 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
         // Apply MultiHeadAttention with padding mask
         output = attention_layers[i].forward(output, output, output, padding_mask);// Self-attention
 
+        // Mask padding in attention output
+        output = Utils::mask_padding(output, padding_mask);
+
         // Add residual connection and apply layer normalization
         output = layer_normalize(add_matrices(residual, output), i);// Residual + Attentions
+
+        // Mask padding in normalization output
+        output = Utils::mask_padding(output, padding_mask);
 
         // Save the input for residual connection before FeedForward
         residual = output;
@@ -99,10 +105,19 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
         // Apply FeedForward
         output = feed_forward_layers[i].forward(output);
 
+        // Mask padding in feedforward output
+        output = Utils::mask_padding(output, padding_mask);
+
         // Add residual connection and apply layer normalization
         output = layer_normalize(add_matrices(residual, output), i);// Residual + FFN
+
+        // Mask padding in final normalized output
+        output = Utils::mask_padding(output, padding_mask);
     }
 
     return output;
 }
+
+
+
 

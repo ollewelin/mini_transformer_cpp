@@ -66,6 +66,20 @@ std::vector<std::vector<float>> Utils::matmul(const std::vector<std::vector<floa
     return result;
 }
 
+std::vector<std::vector<float>> Utils::mask_padding(
+    const std::vector<std::vector<float>> &matrix,
+    const std::vector<int> &padding_mask)
+{
+    std::vector<std::vector<float>> masked_matrix = matrix;
+    for (size_t i = 0; i < masked_matrix.size(); ++i)
+    {
+        if (padding_mask[i] == 0)
+        { // If it's a [PAD] token
+            std::fill(masked_matrix[i].begin(), masked_matrix[i].end(), 0.0f);
+        }
+    }
+    return masked_matrix;
+}
 
 std::vector<std::vector<float>> Utils::transpose(const std::vector<std::vector<float>> &matrix)
 {

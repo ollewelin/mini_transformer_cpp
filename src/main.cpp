@@ -170,7 +170,7 @@ int main() {
                     // However, higher d_model also increases computational complexity and 
                     // the risk of overfitting for small datasets, so a balance is needed.
 
-    int num_heads = 8;
+    int num_heads = 2;//8
     int d_ff = 256;
     int num_layers = 6;
     int max_len = 64; // Maximum sequence length (number of tokens in a single input)
@@ -299,7 +299,7 @@ int main() {
 
     //================ Set up the transformer ===============
     vocab_size = vocab.size(); // Dynamically set to the actual vocabulary size
-    d_model = 16;
+    d_model = 6;
     // Create transformer
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
 

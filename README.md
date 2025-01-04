@@ -15,6 +15,7 @@ transformer_project/
 ├── src/
 │   ├── main.cpp            # Entry point for the application
 │   ├── config.cpp
+│   ├── dataset.cpp         # Mini dataset toy example
 │   ├── transformer.cpp     # Implementation of the Transformer
 │   ├── attention.cpp       # Implementation of the attention mechanism
 │   ├── feed_forward.cpp    # Implementation of the feed-forward network
@@ -25,6 +26,7 @@ transformer_project/
 │   ├── transformer.h
 │   ├── config.h            # Contain preprocessor directives (Global preprocessor directives) and Global variables 
 │   ├── attention.h
+│   ├── dataset.h
 │   ├── feed_forward.h
 │   ├── embedding.h
 │   ├── positional_encoding.h

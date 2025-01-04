@@ -1,6 +1,6 @@
 #include "transformer.h"
 #include <iostream>
-
+#include "dataset.h"
 #include <vector>
 
 using namespace std;
@@ -263,6 +263,40 @@ int main() {
     }
 #endif
 
+
+    // Define a simple vocabulary
+    std::unordered_map<std::string, int> vocab = {
+        {"what", 1}, {"time", 2}, {"is", 3}, {"it", 4}, {"now", 5},
+        {"how", 6}, {"are", 7}, {"you", 8}, {"doing", 9}, {"today", 10},
+        {"can", 11}, {"help", 12}, {"me", 13}, {"with", 14}, {"this", 15},
+        {"where", 16}, {"the", 17}, {"nearest", 18}, {"bus", 19}, {"stop", 20},
+        {"why", 21}, {"sky", 22}, {"blue", 23}, {"who", 24}, {"wrote", 25},
+        {"book", 26}, {"which", 27}, {"movie", 28}, {"do", 29}, {"recommend", 30},
+        {"when", 31}, {"will", 32}, {"meeting", 33}, {"start", 34}, {"going", 35},
+        {"to", 36}, {"rain", 37}, {"could", 38}, {"explain", 39}, {"that", 40},
+        {"again", 41}, {"three", 42}, {"oclock", 43}, {"am", 44}, {"well", 45},
+        {"thank", 46}, {"yes", 47}, {"i", 48}, {"help", 49}, {"light", 50},
+        {"scattering", 51}, {"jane", 52}, {"austen", 53}, {"inception", 54},
+        {"ten", 55}, {"minutes", 56}, {"sure", 57}, {"later", 58}
+    };
+
+    // Prepare the dataset
+    std::vector<std::vector<int>> data;
+    std::vector<int> labels;
+    prepare_dataset(data, labels, vocab);
+
+    // Display tokenized sentences and their labels
+    std::cout << "Tokenized Dataset:\n";
+    for (size_t i = 0; i < data.size(); ++i) {
+        std::cout << (labels[i] == 0 ? "Question: " : "Answer: ");
+        for (int token : data[i]) {
+            std::cout << token << " ";
+        }
+        std::cout << "\n";
+    }
+
+    //================ Set up the transformer ===============
+    vocab_size = vocab.size(); // Dynamically set to the actual vocabulary size
     // Create transformer
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
     
@@ -276,10 +310,7 @@ int main() {
 
     // Forward pass
     auto output = transformer.forward(input);
-    transformer.save_layer_norm_weights();
-    transformer.save_embedding_matrix();
-    transformer.save_attention_weights();
-    transformer.save_feed_forward_weights();
+
 
     // Print output
     for (const auto& row : output) {
@@ -289,6 +320,11 @@ int main() {
         }
         std::cout << "\n";
     }
+
+    transformer.save_layer_norm_weights();
+    transformer.save_embedding_matrix();
+    transformer.save_attention_weights();
+    transformer.save_feed_forward_weights();
 #endif
 
     return 0;

@@ -52,7 +52,7 @@ std::vector<std::vector<float>> Utils::matmul(const std::vector<std::vector<floa
     size_t rows = a.size();
     size_t cols = b[0].size();
     size_t inner_dim = b.size();
-
+    
     std::vector<std::vector<float>> result(rows, std::vector<float>(cols, 0.0f));
 
     for (size_t i = 0; i < rows; ++i) {

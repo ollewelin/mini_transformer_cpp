@@ -18,6 +18,44 @@ using namespace std;
 #include "feed_forward.h"
 #endif
 
+#include <algorithm> // For Fisher-Yates shuffle
+#include <random>    // For random number generation
+#include <chrono>    // For seeding random number generator
+
+// Function to shuffle dataset
+void fisher_yates_shuffle(std::vector<std::vector<int>>& dataset, std::vector<int>& labels) {
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::mt19937 rng(seed);
+
+    for (size_t i = dataset.size() - 1; i > 0; --i) {
+        std::uniform_int_distribution<size_t> dist(0, i);
+        size_t j = dist(rng);
+
+        std::swap(dataset[i], dataset[j]);
+        std::swap(labels[i], labels[j]);
+    }
+}
+
+// Function to pad a sequence to `max_len`
+std::vector<int> pad_sequence(const std::vector<int>& sequence, int max_len) {
+    std::vector<int> padded_sequence = sequence;
+    if (padded_sequence.size() < (size_t)max_len) {
+        padded_sequence.resize(max_len, 0); // Pad with 0s (assumed [PAD] token)
+    }
+    return padded_sequence;
+}
+
+// Function to create padding mask
+std::vector<int> create_padding_mask(const std::vector<int>& sequence, int max_len) {
+    std::vector<int> mask(max_len, 0);
+    for (size_t i = 0; i < sequence.size(); ++i) {
+        if (sequence[i] != 0) { // Assume non-zero tokens are valid
+            mask[i] = 1;
+        }
+    }
+    return mask;
+}
+
 // Mean Pooling
 std::vector<float> mean_pooling(const std::vector<std::vector<float>>& output) {
     std::vector<float> pooled(output[0].size(), 0.0f);
@@ -253,10 +291,20 @@ int main() {
                     // However, higher d_model also increases computational complexity and 
                     // the risk of overfitting for small datasets, so a balance is needed.
 
-    int num_heads = 2;//8
-    int d_ff = 256;
+    int num_heads = 2;// 8
+    int d_ff = 256;   // d_ff: Dimensionality of the hidden layer in the feed-forward network.
+                      //       Each feed-forward network in the transformer consists of two linear layers:
+                      //       - The first layer expands the input dimensionality (d_model) to a larger hidden size (d_ff).
+                      //       - The second layer projects the hidden layer back down to the original dimensionality (d_model).
+                      //       This expansion allows the model to learn richer, non-linear representations
+                      //       by operating in a higher-dimensional space during the intermediate steps.
+                      //
+                      //       Typical values for d_ff are 2-4 times larger than d_model.
+                      //       For example:
+                      //         d_model = 128, d_ff = 256 or d_ff = 512.
+                      //       This ratio balances the model's capacity with computational efficiency.
     int num_layers = 6;
-    int max_len = 64; // Maximum sequence length (number of tokens in a single input)
+    int max_len = 10; //64  Maximum sequence length (number of tokens in a single input)
 
 #ifdef TEST_UTILS
 
@@ -348,124 +396,117 @@ int main() {
     }
 #endif
 
-
-    // Define a simple vocabulary
-    std::unordered_map<std::string, int> vocab = {
-        {"what", 1}, {"time", 2}, {"is", 3}, {"it", 4}, {"now", 5},
-        {"how", 6}, {"are", 7}, {"you", 8}, {"doing", 9}, {"today", 10},
-        {"can", 11}, {"help", 12}, {"me", 13}, {"with", 14}, {"this", 15},
-        {"where", 16}, {"the", 17}, {"nearest", 18}, {"bus", 19}, {"stop", 20},
-        {"why", 21}, {"sky", 22}, {"blue", 23}, {"who", 24}, {"wrote", 25},
-        {"book", 26}, {"which", 27}, {"movie", 28}, {"do", 29}, {"recommend", 30},
-        {"when", 31}, {"will", 32}, {"meeting", 33}, {"start", 34}, {"going", 35},
-        {"to", 36}, {"rain", 37}, {"could", 38}, {"explain", 39}, {"that", 40},
-        {"again", 41}, {"three", 42}, {"oclock", 43}, {"am", 44}, {"well", 45},
-        {"thank", 46}, {"yes", 47}, {"i", 48}, {"help", 49}, {"light", 50},
-        {"scattering", 51}, {"jane", 52}, {"austen", 53}, {"inception", 54},
-        {"ten", 55}, {"minutes", 56}, {"sure", 57}, {"later", 58}
-    };
+// Define a simple vocabulary
+std::unordered_map<std::string, int> vocab = {
+    {"what", 0}, {"time", 1}, {"is", 2}, {"it", 3}, {"now", 4},
+    {"how", 5}, {"are", 6}, {"you", 7}, {"doing", 8}, {"today", 9},
+    {"can", 10}, {"help", 11}, {"me", 12}, {"with", 13}, {"this", 14},
+    {"where", 15}, {"the", 16}, {"nearest", 17}, {"bus", 18}, {"stop", 19},
+    {"why", 20}, {"sky", 21}, {"blue", 22}, {"who", 23}, {"wrote", 24},
+    {"book", 25}, {"which", 26}, {"movie", 27}, {"do", 28}, {"recommend", 29},
+    {"when", 30}, {"will", 31}, {"meeting", 32}, {"start", 33}, {"going", 34},
+    {"to", 35}, {"rain", 36}, {"could", 37}, {"explain", 38}, {"that", 39},
+    {"again", 40}, {"three", 41}, {"oclock", 42}, {"am", 43}, {"well", 44},
+    {"thank", 45}, {"yes", 46}, {"i", 47}, {"light", 48}, {"scattering", 49},
+    {"jane", 50}, {"austen", 51}, {"inception", 52}, {"ten", 53},
+    {"minutes", 54}, {"sure", 55}, {"later", 56}
+};
 
     // Prepare the dataset
-    std::vector<std::vector<int>> data;
+    std::vector<std::vector<int>> dataset_2D;
     std::vector<int> labels;
-    prepare_dataset(data, labels, vocab);
+    prepare_dataset(dataset_2D, labels, vocab);
 
     // Display tokenized sentences and their labels
     std::cout << "Tokenized Dataset:\n";
-    for (size_t i = 0; i < data.size(); ++i) {
+    for (size_t i = 0; i < dataset_2D.size(); ++i) {
         std::cout << (labels[i] == 0 ? "Question: " : "Answer: ");
-        for (int token : data[i]) {
+        for (int token : dataset_2D[i]) {
             std::cout << token << " ";
         }
         std::cout << "\n";
     }
 
-    //================ Set up the transformer ===============
+    // ================== Set up the transformer ==================
     vocab_size = vocab.size(); // Dynamically set to the actual vocabulary size
-    d_model = 6;
-    // Initialize final layer weights and bias
+    cout << "vocab_size = " << vocab_size << endl;
 
+    d_model = 6;
+    d_ff = 24;
+
+    // Initialize final layer weights and bias
     int num_categories = 2; // Number of output categories (Question/Answer)
 
     std::vector<std::vector<float>> final_weights(d_model, std::vector<float>(num_categories, 0.0f));
     std::vector<float> final_bias(num_categories, 0.0f);
 
-    if (load_parameters_yes_no)
-    {
-        if (!load_final_layer_weights(final_weights, final_bias))
-        {
+    if (load_parameters_yes_no) {
+        if (!load_final_layer_weights(final_weights, final_bias)) {
             // Fall back to random initialization if loading fails
             std::srand(std::time(0));
-            for (auto &row : final_weights)
-            {
-                for (auto &val : row)
-                {
+            for (auto& row : final_weights) {
+                for (auto& val : row) {
                     val = static_cast<float>(std::rand()) / RAND_MAX; // Random values between 0 and 1
                 }
             }
-            for (auto &val : final_bias)
-            {
+            for (auto& val : final_bias) {
                 val = static_cast<float>(std::rand()) / RAND_MAX;
             }
         }
-    }
-    else
-    {
+    } else {
         // Random initialization
         std::srand(std::time(0));
-        for (auto &row : final_weights)
-        {
-            for (auto &val : row)
-            {
+        for (auto& row : final_weights) {
+            for (auto& val : row) {
                 val = static_cast<float>(std::rand()) / RAND_MAX;
             }
         }
-        for (auto &val : final_bias)
-        {
+        for (auto& val : final_bias) {
             val = static_cast<float>(std::rand()) / RAND_MAX;
         }
     }
 
-
-
-
     // Create transformer
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
 
-    // Input with padding
-    std::vector<int> input = {1, 2, 3, 0, 0}; // Tokens with [PAD]
+    // ============== Training loop ===================
+    int epochs = 10;
 
-    // Padding mask
-    std::vector<int> padding_mask = {1, 1, 1, 0, 0};
+    for (int epoch = 1; epoch <= epochs; ++epoch) {
+        std::cout << "Epoch " << epoch << " / " << epochs << "\n";
 
-    if (input.size() > (unsigned int)max_len)
-    {
-        std::cerr << "Error: Input sequence length exceeds maximum allowed length of " << max_len << "." << std::endl;
-        return 1;
+        // Shuffle dataset
+        fisher_yates_shuffle(dataset_2D, labels);
+
+        for (size_t i = 0; i < dataset_2D.size(); ++i) {
+            // Prepare input and padding mask
+            auto padded_input = pad_sequence(dataset_2D[i], max_len);
+            auto padding_mask = create_padding_mask(dataset_2D[i], max_len);
+
+            // Forward pass through transformer
+            auto output = transformer.forward(padding_mask, padding_mask);
+
+            // Reduce transformer output (e.g., by mean pooling)
+            std::vector<float> pooled_output = mean_pooling(output);
+
+            // Apply final classification layer
+            std::vector<float> logits = linear_layer(pooled_output, final_weights, final_bias);
+            std::vector<float> probabilities = softmax(logits);
+
+            // Print input and probabilities for debugging
+            std::cout << "Input: ";
+            for (int token : padded_input) {
+                std::cout << token << " ";
+            }
+            std::cout << "\nProbabilities: ";
+            for (float prob : probabilities) {
+                std::cout << prob << " ";
+            }
+            
+            std::cout << "\n";
+        }
     }
-
-    std::cout << "input vector : ";
-    for (int val : input) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
-
-    // Forward pass through transformer
-    auto output = transformer.forward(input, padding_mask);
-
-    // Reduce transformer output (e.g., by mean pooling or using the first token)
-    std::vector<float> pooled_output = mean_pooling(output);
-
-    // Apply final classification layer
-    std::vector<float> logits = linear_layer(pooled_output, final_weights, final_bias);
-    std::vector<float> probabilities = softmax(logits);
-
-    // Print probabilities
-    std::cout << "Probabilities: ";
-    for (float prob : probabilities) {
-        std::cout << prob << " ";
-    }
-    std::cout << std::endl;
+    //========================== End training loop ===================
 
     // Save final layer weights (optional)
     save_final_layer_weights(final_weights, final_bias);

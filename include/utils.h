@@ -4,6 +4,9 @@
 #include <vector>
 #include "config.h"
 #include <iostream>
+#include <unordered_map>
+#include <string>
+#include <set>
 
 namespace Utils {
     // Matrix multiplication
@@ -31,6 +34,8 @@ namespace Utils {
 
     //mask padding
     std::vector<std::vector<float>> mask_padding(const std::vector<std::vector<float>> &matrix, const std::vector<int> &padding_mask);
+
+    bool check_vocabs(const std::unordered_map<std::string, int>& vocab);
 };
 
 #endif // UTILS_H

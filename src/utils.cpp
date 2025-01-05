@@ -5,6 +5,49 @@
 #include <algorithm> // Add this for std::max_element
 #include <iomanip>   // For formatted output
 
+bool Utils::check_vocabs(const std::unordered_map<std::string, int>& vocab) {
+    std::set<int> indices; // To track used indices
+    std::set<std::string> strings; // To track duplicate strings
+    int max_index = vocab.size() - 1;
+
+    for (const auto& [word, index] : vocab) {
+        // Check for duplicate strings
+        if (strings.find(word) != strings.end()) {
+            std::cerr << "Error: Duplicate word found in vocab: " << word << "\n";
+            return false;
+        }
+        strings.insert(word);
+
+        // Check if indices are within valid range and unique
+        if (index < 0 || index > max_index) {
+            std::cerr << "Error: Index " << index << " is out of range for word: " << word << "\n";
+            return false;
+        }
+        if (indices.find(index) != indices.end()) {
+            std::cerr << "Error: Duplicate index found in vocab: " << index << " for word: " << word << "\n";
+            return false;
+        }
+        indices.insert(index);
+    }
+
+    // Check if all indices are contiguous from 0 to max_index
+    if (indices.size() != vocab.size()) {
+        std::cerr << "Error: Missing indices. Vocab size is " << vocab.size()
+                  << " but unique indices are " << indices.size() << "\n";
+        return false;
+    }
+
+    for (int i = 0; i <= max_index; ++i) {
+        if (indices.find(i) == indices.end()) {
+            std::cerr << "Error: Missing index " << i << " in vocab.\n";
+            return false;
+        }
+    }
+
+    std::cout << "Vocab validation passed: No duplicates, and indices are contiguous.\n";
+    return true;
+}
+
 float Utils::leaky_relu(float x) {
     return (x > 0) ? x : GLOBAL_LEAKY_SLOPE * x;
 }

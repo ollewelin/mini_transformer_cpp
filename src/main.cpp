@@ -2,16 +2,12 @@
 #include <iostream>
 #include "dataset.h"
 #include <vector>
-
+#include "utils.h"
 using namespace std;
 
 #include "config.h"
 #ifdef TEST_UTILS
 #include "attention.h"
-#include "utils.h"
-#endif
-#ifdef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION
-#include "utils.h"
 #endif
 
 #ifdef TEST_FEEDFORWARD
@@ -396,22 +392,26 @@ int main() {
     }
 #endif
 
-// Define a simple vocabulary
-std::unordered_map<std::string, int> vocab = {
-    {"what", 0}, {"time", 1}, {"is", 2}, {"it", 3}, {"now", 4},
-    {"how", 5}, {"are", 6}, {"you", 7}, {"doing", 8}, {"today", 9},
-    {"can", 10}, {"help", 11}, {"me", 12}, {"with", 13}, {"this", 14},
-    {"where", 15}, {"the", 16}, {"nearest", 17}, {"bus", 18}, {"stop", 19},
-    {"why", 20}, {"sky", 21}, {"blue", 22}, {"who", 23}, {"wrote", 24},
-    {"book", 25}, {"which", 26}, {"movie", 27}, {"do", 28}, {"recommend", 29},
-    {"when", 30}, {"will", 31}, {"meeting", 32}, {"start", 33}, {"going", 34},
-    {"to", 35}, {"rain", 36}, {"could", 37}, {"explain", 38}, {"that", 39},
-    {"again", 40}, {"three", 41}, {"oclock", 42}, {"am", 43}, {"well", 44},
-    {"thank", 45}, {"yes", 46}, {"i", 47}, {"light", 48}, {"scattering", 49},
-    {"jane", 50}, {"austen", 51}, {"inception", 52}, {"ten", 53},
-    {"minutes", 54}, {"sure", 55}, {"later", 56}
-};
-
+    // Define a simple vocabulary
+    std::unordered_map<std::string, int> vocab = {
+        {"what", 0}, {"time", 1}, {"is", 2}, {"it", 3}, {"now", 4},
+        {"how", 5}, {"are", 6}, {"you", 7}, {"doing", 8}, {"today", 9},
+        {"can", 10}, {"help", 11}, {"me", 12}, {"with", 13}, {"this", 14},
+        {"where", 15}, {"the", 16}, {"nearest", 17}, {"bus", 18}, {"stop", 19},
+        {"why", 20}, {"sky", 21}, {"blue", 22}, {"who", 23}, {"wrote", 24},
+        {"book", 25}, {"which", 26}, {"movie", 27}, {"do", 28}, {"recommend", 29},
+        {"when", 30}, {"will", 31}, {"meeting", 32}, {"start", 33}, {"going", 34},
+        {"to", 35}, {"rain", 36}, {"could", 37}, {"explain", 38}, {"that", 39},
+        {"again", 40}, {"three", 41}, {"oclock", 42}, {"am", 43}, {"well", 44},
+        {"thank", 45}, {"yes", 46}, {"i", 47}, {"light", 48}, {"scattering", 49},
+        {"jane", 50}, {"austen", 51}, {"inception", 52}, {"ten", 53},
+        {"minutes", 54}, {"sure", 55}, {"later", 56}
+    };
+    if (!Utils::check_vocabs(vocab)) {
+        std::cerr << "Vocabulary validation failed.\n";
+        return 1; // Exit with error
+    }
+    std::cout << "Vocabulary validation succeeded.\n";
     // Prepare the dataset
     std::vector<std::vector<int>> dataset_2D;
     std::vector<int> labels;
@@ -514,21 +514,7 @@ std::unordered_map<std::string, int> vocab = {
     transformer.save_embedding_matrix();
     transformer.save_attention_weights();
     transformer.save_feed_forward_weights();    
-/*
-    // Print output
-    int row_nr=0;
-    int col_nr=0;
-    for (const auto& row : output) {
-        std::cout << "output Row: " << row_nr << endl;
-        row_nr++;
-        for (float val : row) {
-            std::cout << " col_nr: " << col_nr << " data: "<< val <<endl;
-            col_nr++;
-        }
-        std::cout << "\n";
-        std::cout << "\n";
-    }
-*/
+
 
 #endif
 

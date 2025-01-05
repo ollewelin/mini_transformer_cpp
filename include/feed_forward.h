@@ -14,6 +14,17 @@
 class FeedForward {
 public:
     FeedForward(int d_model, int d_ff, bool load_parameters_yes_no, int layer_index);
+    // d_ff: Dimensionality of the hidden layer in the feed-forward network.
+    //       Each feed-forward network in the transformer consists of two linear layers:
+    //       - The first layer expands the input dimensionality (d_model) to a larger hidden size (d_ff).
+    //       - The second layer projects the hidden layer back down to the original dimensionality (d_model).
+    //       This expansion allows the model to learn richer, non-linear representations
+    //       by operating in a higher-dimensional space during the intermediate steps.
+    //
+    //       Typical values for d_ff are 2-4 times larger than d_model.
+    //       For example:
+    //         d_model = 128, d_ff = 256 or d_ff = 512.
+    //       This ratio balances the model's capacity with computational efficiency.
 
     std::vector<std::vector<float>> forward(const std::vector<std::vector<float>>& input);
     // Save weights to binary files

@@ -18,6 +18,21 @@ using namespace std;
 #include <random>    // For random number generation
 #include <chrono>    // For seeding random number generator
 
+// Cross-entropy loss gradient
+std::vector<float> cross_entropy_loss_gradient(const std::vector<float>& probabilities, int label) {
+    std::vector<float> gradient(probabilities.size(), 0.0f);
+    for (size_t i = 0; i < probabilities.size(); ++i) {
+        gradient[i] = probabilities[i] - (i == static_cast<size_t>(label) ? 1.0f : 0.0f);
+    }
+    return gradient;
+}
+// Function to compute cross-entropy loss
+float cross_entropy_loss(const std::vector<float>& probabilities, int label) {
+    return -std::log(probabilities[label] + 1e-9); // Add small epsilon for numerical stability
+}
+
+
+
 // Function to shuffle dataset
 void fisher_yates_shuffle(std::vector<std::vector<int>>& dataset, std::vector<int>& labels) {
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -65,6 +80,69 @@ std::vector<float> mean_pooling(const std::vector<std::vector<float>>& output) {
     }
     return pooled;
 }
+std::vector<std::vector<float>> mean_pooling_backward(
+    const std::vector<std::vector<float>>& output, 
+    const std::vector<float>& grad_pooled
+) {
+    size_t rows = output.size();
+    size_t cols = output[0].size();
+    std::vector<std::vector<float>> grad_output(rows, std::vector<float>(cols, 0.0f));
+
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            grad_output[i][j] = grad_pooled[j] / static_cast<float>(rows);
+        }
+    }
+
+    return grad_output;
+}
+std::vector<std::vector<float>> mean_pooling_backward_debug(
+    const std::vector<std::vector<float>>& output, 
+    const std::vector<float>& grad_pooled
+) {
+    size_t rows = output.size();
+    size_t cols = output[0].size();
+    std::vector<std::vector<float>> grad_output(rows, std::vector<float>(cols, 0.0f));
+
+    // Debug: Print input arguments
+    std::cout << "Mean Pooling Backward Debug:" << std::endl;
+    std::cout << "Output (input to mean pooling):" << std::endl;
+    for (const auto& row : output) {
+        for (float val : row) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << "Grad Pooled (gradient from next layer):" << std::endl;
+    for (float val : grad_pooled) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+
+    // Compute gradients
+    std::cout << "Computing Gradients w.r.t Mean Pooling Input:" << std::endl;
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            grad_output[i][j] = grad_pooled[j] / static_cast<float>(rows);
+            // Debug: Print computed gradient for each element
+            std::cout << "grad_output[" << i << "][" << j << "] = "
+                      << grad_output[i][j] << std::endl;
+        }
+    }
+
+    // Debug: Print final gradient output
+    std::cout << "Gradient Output (w.r.t Mean Pooling Input):" << std::endl;
+    for (const auto& row : grad_output) {
+        for (float val : row) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    return grad_output;
+}
+
 //Final Classification Layer 
 std::vector<float> linear_layer(const std::vector<float>& input, const std::vector<std::vector<float>>& weights, const std::vector<float>& bias) {
     std::vector<float> output(weights[0].size(), 0.0f);
@@ -135,6 +213,34 @@ bool load_final_layer_weights(std::vector<std::vector<float>>& weights, std::vec
     return true;
 }
 
+void print_out_probabilities(std::vector<float> probabilities, std::vector<int> padded_input)
+{
+    // Print probabilities for debugging
+    std::cout << "Input: ";
+    for (int token : padded_input)
+    {
+        std::cout << token << " ";
+    }
+    std::cout << "\nProbabilities: ";
+    for (float prob : probabilities)
+    {
+        std::cout << prob << " ";
+    }
+    std::cout << "\n";
+}
+void print_out_gradient_mean_pool(std::vector<std::vector<float>> grad_output)
+{
+    // Print gradient for debugging
+    std::cout << "Gradient w.r.t Mean Pooling Input:" << std::endl;
+    for (const auto &row : grad_output)
+    {
+        for (float val : row)
+        {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+    }
+}
 
 int main() {
     cout << "========================================================================================================" << endl;
@@ -287,7 +393,7 @@ int main() {
                     // However, higher d_model also increases computational complexity and 
                     // the risk of overfitting for small datasets, so a balance is needed.
 
-    int num_heads = 2;// 8
+    int num_heads = 1;// 8
     int d_ff = 256;   // d_ff: Dimensionality of the hidden layer in the feed-forward network.
                       //       Each feed-forward network in the transformer consists of two linear layers:
                       //       - The first layer expands the input dimensionality (d_model) to a larger hidden size (d_ff).
@@ -300,7 +406,7 @@ int main() {
                       //         d_model = 128, d_ff = 256 or d_ff = 512.
                       //       This ratio balances the model's capacity with computational efficiency.
     int num_layers = 6;
-    int max_len = 10; //64  Maximum sequence length (number of tokens in a single input)
+    int max_len = 8; //64  Maximum sequence length (number of tokens in a single input)
 
 #ifdef TEST_UTILS
 
@@ -470,41 +576,122 @@ int main() {
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
 
     // ============== Training loop ===================
-    int epochs = 10;
+    int epochs = 1000;
+    // Initialize velocity for weights and bias
+    std::vector<std::vector<float>> velocity_weights(final_weights.size(),
+                                                     std::vector<float>(final_weights[0].size(), 0.0f));
+    std::vector<float> velocity_bias(final_bias.size(), 0.0f);
 
-    for (int epoch = 1; epoch <= epochs; ++epoch) {
+    float learning_rate = 0.01;
+    float momentum = 0.9;
+
+    // Training loop with gradient computation
+    for (int epoch = 1; epoch <= epochs; ++epoch)
+    {
         std::cout << "Epoch " << epoch << " / " << epochs << "\n";
 
         // Shuffle dataset
         fisher_yates_shuffle(dataset_2D, labels);
+        float epoch_loss = 0.0f; // Accumulate loss for the epoch
 
-        for (size_t i = 0; i < dataset_2D.size(); ++i) {
+        for (size_t i = 0; i < dataset_2D.size(); ++i)
+        {
             // Prepare input and padding mask
             auto padded_input = pad_sequence(dataset_2D[i], max_len);
             auto padding_mask = create_padding_mask(dataset_2D[i], max_len);
 
             // Forward pass through transformer
-            auto output = transformer.forward(padding_mask, padding_mask);
-
+            auto output = transformer.forward(padded_input, padding_mask);
+/*
+            std::cout << "Transformer Output Before Pooling:" << std::endl;
+            for (const auto& row : output) {
+                for (float val : row) {
+                    std::cout << val << " ";
+                }
+                std::cout << std::endl;
+            }
+*/
             // Reduce transformer output (e.g., by mean pooling)
             std::vector<float> pooled_output = mean_pooling(output);
-
+ /*           
+            std::cout << "Pooled Output (Input to Classification Layer):" << std::endl;
+            for (float val : pooled_output) {
+                std::cout << val << " ";
+            }
+            std::cout << std::endl;
+*/
             // Apply final classification layer
             std::vector<float> logits = linear_layer(pooled_output, final_weights, final_bias);
+           
             std::vector<float> probabilities = softmax(logits);
 
-            // Print input and probabilities for debugging
-            std::cout << "Input: ";
-            for (int token : padded_input) {
-                std::cout << token << " ";
+            // Backpropagation starts here
+            // Step 1: Compute gradient of loss with respect to logits
+            std::vector<float> grad_logits = cross_entropy_loss_gradient(probabilities, labels[i]);
+
+
+
+            // Step 2: Compute gradients for final weights and bias
+            std::vector<std::vector<float>> grad_final_weights(final_weights.size(),
+                                                               std::vector<float>(final_weights[0].size(), 0.0f));
+            std::vector<float> grad_final_bias(final_bias.size(), 0.0f);
+
+            for (size_t j = 0; j < pooled_output.size(); ++j)
+            {
+                for (size_t k = 0; k < grad_logits.size(); ++k)
+                {
+                    grad_final_weights[j][k] += pooled_output[j] * grad_logits[k];
+                }
             }
-            std::cout << "\nProbabilities: ";
-            for (float prob : probabilities) {
-                std::cout << prob << " ";
+
+            for (size_t k = 0; k < grad_logits.size(); ++k)
+            {
+                grad_final_bias[k] += grad_logits[k];
             }
+
+            // Step 3: Update final weights and bias using SGD with momentum
+            for (size_t j = 0; j < final_weights.size(); ++j)
+            {
+                for (size_t k = 0; k < final_weights[0].size(); ++k)
+                {
+                    velocity_weights[j][k] = momentum * velocity_weights[j][k] - learning_rate * grad_final_weights[j][k];
+                    final_weights[j][k] += velocity_weights[j][k];
+                }
+            }
+
+            for (size_t k = 0; k < final_bias.size(); ++k)
+            {
+                velocity_bias[k] = momentum * velocity_bias[k] - learning_rate * grad_final_bias[k];
+                final_bias[k] += velocity_bias[k];
+            }
+
+            // Compute gradient of final layer with respect to mean pooling output
+            std::vector<float> pooled_output_gradient(pooled_output.size(), 0.0f);
+            for (size_t i = 0; i < final_weights.size(); ++i) {
+                for (size_t j = 0; j < grad_logits.size(); ++j) {
+                    pooled_output_gradient[i] += grad_logits[j] * final_weights[i][j];
+                }
+            }
+
+            // Backpropagate through mean pooling
+            std::vector<std::vector<float>> grad_pooled = mean_pooling_backward(output, pooled_output_gradient);
+
+            // Print gradient for debugging
+        //    print_out_gradient_mean_pool(grad_pooled);
             
-            std::cout << "\n";
+            // Backpropagate gradient through the Transformer
+
+            //TODO
+            //transformer.backward(grad_pooled);
+
+            //print_out_probabilities(probabilities, padded_input);// Print probabilities for debugging
+            // Compute loss and accumulate
+            float loss = cross_entropy_loss(probabilities, labels[i]);
+            epoch_loss += loss;
         }
+
+        // Print average loss for the epoch
+        std::cout << "Average Loss for Epoch " << epoch << ": " << (epoch_loss / dataset_2D.size()) << "\n";
     }
     //========================== End training loop ===================
 
@@ -521,4 +708,3 @@ int main() {
     return 0;
 
 }
-

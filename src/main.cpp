@@ -80,67 +80,21 @@ std::vector<float> mean_pooling(const std::vector<std::vector<float>>& output) {
     }
     return pooled;
 }
+//output_trans, pooled_output_gradient
 std::vector<std::vector<float>> mean_pooling_backward(
-    const std::vector<std::vector<float>>& output, 
+    const std::vector<std::vector<float>>& output_from_transformer, 
     const std::vector<float>& grad_pooled
 ) {
-    size_t rows = output.size();
-    size_t cols = output[0].size();
-    std::vector<std::vector<float>> grad_output(rows, std::vector<float>(cols, 0.0f));
+    size_t rows = output_from_transformer.size();
+    size_t cols = output_from_transformer[0].size();
+    std::vector<std::vector<float>> grad_output_to_transformer(rows, std::vector<float>(cols, 0.0f));
 
     for (size_t i = 0; i < rows; ++i) {
         for (size_t j = 0; j < cols; ++j) {
-            grad_output[i][j] = grad_pooled[j] / static_cast<float>(rows);
+            grad_output_to_transformer[i][j] = grad_pooled[j] / static_cast<float>(rows);
         }
     }
-
-    return grad_output;
-}
-std::vector<std::vector<float>> mean_pooling_backward_debug(
-    const std::vector<std::vector<float>>& output, 
-    const std::vector<float>& grad_pooled
-) {
-    size_t rows = output.size();
-    size_t cols = output[0].size();
-    std::vector<std::vector<float>> grad_output(rows, std::vector<float>(cols, 0.0f));
-
-    // Debug: Print input arguments
-    std::cout << "Mean Pooling Backward Debug:" << std::endl;
-    std::cout << "Output (input to mean pooling):" << std::endl;
-    for (const auto& row : output) {
-        for (float val : row) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    std::cout << "Grad Pooled (gradient from next layer):" << std::endl;
-    for (float val : grad_pooled) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
-
-    // Compute gradients
-    std::cout << "Computing Gradients w.r.t Mean Pooling Input:" << std::endl;
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
-            grad_output[i][j] = grad_pooled[j] / static_cast<float>(rows);
-            // Debug: Print computed gradient for each element
-            std::cout << "grad_output[" << i << "][" << j << "] = "
-                      << grad_output[i][j] << std::endl;
-        }
-    }
-
-    // Debug: Print final gradient output
-    std::cout << "Gradient Output (w.r.t Mean Pooling Input):" << std::endl;
-    for (const auto& row : grad_output) {
-        for (float val : row) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    return grad_output;
+    return grad_output_to_transformer;
 }
 
 //Final Classification Layer 
@@ -212,6 +166,25 @@ bool load_final_layer_weights(std::vector<std::vector<float>>& weights, std::vec
     std::cout << "Final layer weights loaded from final_layer_weight.bin." << std::endl;
     return true;
 }
+void print_float_vector_1D(std::vector<float> float_vector_1D)
+{
+    for (float val : float_vector_1D)
+    {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+}
+void print_float_vector_2D(std::vector<std::vector<float>> float_vector_2D)
+{
+    for (const auto &row : float_vector_2D)
+    {
+        for (float val : row)
+        {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+    }
+}
 
 void print_out_probabilities(std::vector<float> probabilities, std::vector<int> padded_input)
 {
@@ -222,25 +195,9 @@ void print_out_probabilities(std::vector<float> probabilities, std::vector<int> 
         std::cout << token << " ";
     }
     std::cout << "\nProbabilities: ";
-    for (float prob : probabilities)
-    {
-        std::cout << prob << " ";
-    }
-    std::cout << "\n";
+    print_float_vector_1D(probabilities);
 }
-void print_out_gradient_mean_pool(std::vector<std::vector<float>> grad_output)
-{
-    // Print gradient for debugging
-    std::cout << "Gradient w.r.t Mean Pooling Input:" << std::endl;
-    for (const auto &row : grad_output)
-    {
-        for (float val : row)
-        {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-    }
-}
+
 
 int main() {
     cout << "========================================================================================================" << endl;
@@ -500,18 +457,18 @@ int main() {
 
     // Define a simple vocabulary
     std::unordered_map<std::string, int> vocab = {
-        {"what", 0}, {"time", 1}, {"is", 2}, {"it", 3}, {"now", 4},
-        {"how", 5}, {"are", 6}, {"you", 7}, {"doing", 8}, {"today", 9},
-        {"can", 10}, {"help", 11}, {"me", 12}, {"with", 13}, {"this", 14},
-        {"where", 15}, {"the", 16}, {"nearest", 17}, {"bus", 18}, {"stop", 19},
-        {"why", 20}, {"sky", 21}, {"blue", 22}, {"who", 23}, {"wrote", 24},
-        {"book", 25}, {"which", 26}, {"movie", 27}, {"do", 28}, {"recommend", 29},
-        {"when", 30}, {"will", 31}, {"meeting", 32}, {"start", 33}, {"going", 34},
-        {"to", 35}, {"rain", 36}, {"could", 37}, {"explain", 38}, {"that", 39},
-        {"again", 40}, {"three", 41}, {"oclock", 42}, {"am", 43}, {"well", 44},
-        {"thank", 45}, {"yes", 46}, {"i", 47}, {"light", 48}, {"scattering", 49},
-        {"jane", 50}, {"austen", 51}, {"inception", 52}, {"ten", 53},
-        {"minutes", 54}, {"sure", 55}, {"later", 56}
+        {"[PAD]", 0}, {"[UNK]", 1}, {"what", 2}, {"time", 3}, {"is", 4}, {"it", 5}, {"now", 6},
+        {"how", 7}, {"are", 8}, {"you", 9}, {"doing", 10}, {"today", 11},
+        {"can", 12}, {"help", 13}, {"me", 14}, {"with", 15}, {"this", 16},
+        {"where", 17}, {"the", 18}, {"nearest", 19}, {"bus", 20}, {"stop", 21},
+        {"why", 22}, {"sky", 23}, {"blue", 24}, {"who", 25}, {"wrote", 26},
+        {"book", 27}, {"which", 28}, {"movie", 29}, {"do", 30}, {"recommend", 31},
+        {"when", 32}, {"will", 33}, {"meeting", 34}, {"start", 35}, {"going", 36},
+        {"to", 37}, {"rain", 38}, {"could", 39}, {"explain", 40}, {"that", 41},
+        {"again", 42}, {"three", 43}, {"oclock", 44}, {"am", 45}, {"well", 46},
+        {"thank", 47}, {"yes", 48}, {"i", 49}, {"light", 50}, {"scattering", 51},
+        {"jane", 52}, {"austen", 53}, {"inception", 54}, {"ten", 55},
+        {"minutes", 56}, {"sure", 57}, {"later", 58}
     };
     if (!Utils::check_vocabs(vocab)) {
         std::cerr << "Vocabulary validation failed.\n";
@@ -599,27 +556,36 @@ int main() {
             // Prepare input and padding mask
             auto padded_input = pad_sequence(dataset_2D[i], max_len);
             auto padding_mask = create_padding_mask(dataset_2D[i], max_len);
-
-            // Forward pass through transformer
-            auto output = transformer.forward(padded_input, padding_mask);
-/*
-            std::cout << "Transformer Output Before Pooling:" << std::endl;
-            for (const auto& row : output) {
-                for (float val : row) {
-                    std::cout << val << " ";
-                }
-                std::cout << std::endl;
-            }
-*/
-            // Reduce transformer output (e.g., by mean pooling)
-            std::vector<float> pooled_output = mean_pooling(output);
- /*           
-            std::cout << "Pooled Output (Input to Classification Layer):" << std::endl;
-            for (float val : pooled_output) {
-                std::cout << val << " ";
+#ifdef DEBUG_PRINT_MAIN            
+            std::cout << "Padding Input:" << std::endl;
+            for (int input : padded_input) {
+                std::cout << input << " ";
             }
             std::cout << std::endl;
-*/
+
+            std::cout << "Padding Mask:" << std::endl;
+            for (int mask : padding_mask) {
+                std::cout << mask << " ";
+            }
+            std::cout << std::endl;
+#endif
+
+            // Forward pass through transformer
+            auto output_trans = transformer.forward(padded_input, padding_mask);
+
+#ifdef DEBUG_PRINT_MAIN 
+            std::cout << "Transformer Output Before Pooling:" << std::endl;
+            print_float_vector_2D(output_trans);
+#endif
+
+            // Reduce transformer output (e.g., by mean pooling)
+            std::vector<float> pooled_output = mean_pooling(output_trans);
+
+#ifdef DEBUG_PRINT_MAIN             
+            std::cout << "Pooled Output (Input to Classification Layer):" << std::endl;
+            print_float_vector_1D(pooled_output);
+#endif
+
             // Apply final classification layer
             std::vector<float> logits = linear_layer(pooled_output, final_weights, final_bias);
            
@@ -674,15 +640,18 @@ int main() {
             }
 
             // Backpropagate through mean pooling
-            std::vector<std::vector<float>> grad_pooled = mean_pooling_backward(output, pooled_output_gradient);
+            std::vector<std::vector<float>> grad_pooled = mean_pooling_backward(output_trans, pooled_output_gradient);
 
+#ifdef DEBUG_PRINT_MAIN    
             // Print gradient for debugging
-        //    print_out_gradient_mean_pool(grad_pooled);
-            
+            std::cout << "Gradient w.r.t Mean Pooling Input:" << std::endl;
+            print_float_vector_2D(grad_pooled);
+#endif
+
             // Backpropagate gradient through the Transformer
 
             //TODO
-            //transformer.backward(grad_pooled);
+         //mak   transformer.backward(grad_pooled);
 
             //print_out_probabilities(probabilities, padded_input);// Print probabilities for debugging
             // Compute loss and accumulate
@@ -697,7 +666,7 @@ int main() {
 
     // Save final layer weights (optional)
     save_final_layer_weights(final_weights, final_bias);
-    transformer.save_layer_norm_weights();
+    //transformer.save_layer_norm_weights();
     transformer.save_embedding_matrix();
     transformer.save_attention_weights();
     transformer.save_feed_forward_weights();    

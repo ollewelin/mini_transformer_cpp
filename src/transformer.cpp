@@ -31,51 +31,6 @@ void Transformer::save_feed_forward_weights()
     }
 }
 
-std::vector<std::vector<float>> Transformer::layer_normalize(const std::vector<std::vector<float>> &input, size_t layer_index) {
-    std::vector<std::vector<float>> output = input;
-
-    // Get gamma and beta for this layer
-    const std::vector<float> &gamma_layer = gamma[layer_index];
-    const std::vector<float> &beta_layer = beta[layer_index];
-
-    for (size_t i = 0; i < input.size(); ++i) { // For each row
-        const auto &row = input[i];
-        float mean = std::accumulate(row.begin(), row.end(), 0.0f) / row.size();
-        float variance = 0.0f;
-
-        for (float val : row) {
-            variance += (val - mean) * (val - mean);
-        }
-        variance /= row.size();
-        float stddev = std::sqrt(variance + 1e-6); // Epsilon for numerical stability
-
-        // Normalize and apply gamma and beta
-        for (size_t j = 0; j < row.size(); ++j) {
-            output[i][j] = gamma_layer[j] * ((row[j] - mean) / stddev) + beta_layer[j];
-        }
-    }
-
-    return output;
-}
-
-void Transformer::save_layer_norm_weights()
-{
-    for (size_t i = 0; i < gamma.size(); ++i)
-    {
-        std::string file_name = "normalize_weights_layer_" + std::to_string(i) + ".bin";
-        std::ofstream file(file_name, std::ios::binary);
-        if (file.is_open())
-        {
-            file.write(reinterpret_cast<const char *>(gamma[i].data()), gamma[i].size() * sizeof(float));
-            file.write(reinterpret_cast<const char *>(beta[i].data()), beta[i].size() * sizeof(float));
-            file.close();
-        }
-        else
-        {
-            std::cerr << "Error: Could not save normalization weights for layer " << i << ".\n";
-        }
-    }
-}
 
 std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& input, const std::vector<int>& padding_mask) {
     // Step 1: Embedding and positional encoding
@@ -94,7 +49,7 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
         output = Utils::mask_padding(output, padding_mask);
 
         // Add residual connection and apply layer normalization
-        output = layer_normalize(add_matrices(residual, output), i);// Residual + Attentions
+        output = layer_norms[i*2].forward(add_matrices(residual, output));// Residual + Attentions
 
         // Mask padding in normalization output
         output = Utils::mask_padding(output, padding_mask);
@@ -109,7 +64,7 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
         output = Utils::mask_padding(output, padding_mask);
 
         // Add residual connection and apply layer normalization
-        output = layer_normalize(add_matrices(residual, output), i);// Residual + FFN
+        output = layer_norms[i*2+1].forward(add_matrices(residual, output));// Residual + FFN
 
         // Mask padding in final normalized output
         output = Utils::mask_padding(output, padding_mask);
@@ -118,6 +73,33 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
     return output;
 }
 
+/*
+// Backward pass implementation for the Transformer
+void Transformer::backward(const std::vector<std::vector<float>>& grad_pooled) {
+    // Step 1: Backpropagate through the final feedforward layer
+    auto grad_ff = feed_forward_layers.back().backward(grad_pooled);
 
+    // Step 2: Backpropagate through the attention layers in reverse order
+    for (int i = attention_layers.size() - 1; i >= 0; --i) {
+        // Step 2.1: Backpropagate through the feedforward layers within the block
+        auto grad_ffn = feed_forward_layers[i].backward(grad_ff);
 
+        // Step 2.2: Backpropagate through residual connections and layer normalization
+        grad_ffn = layer_norms[i].backward(grad_ffn);
+
+        // Step 2.3: Backpropagate through the multi-head attention layer
+        auto grad_attn = attention_layers[i].backward(grad_ffn);
+
+        // Update the gradient for the next block
+        grad_ff = grad_attn;
+    }
+
+    // Step 3: Backpropagate through positional encoding
+    auto grad_pos = pos_encoding.backward(grad_ff);
+
+    // Step 4: Backpropagate through the embedding layer
+    embedding.backward(grad_pos);
+}
+
+*/
 

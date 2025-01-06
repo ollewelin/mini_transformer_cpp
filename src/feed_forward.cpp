@@ -83,3 +83,23 @@ std::vector<std::vector<float>> FeedForward::forward(const std::vector<std::vect
 
     return output;
 }
+
+std::vector<std::vector<float>> FeedForward::backward(const std::vector<std::vector<float>>& grad_output) {
+    // Step 1: Compute gradients for weights2
+    auto weights2_transposed = Utils::transpose(weights2);
+    auto grad_hidden = Utils::matmul(grad_output, weights2_transposed);
+
+    // Step 2: Apply derivative of ReLU activation to grad_hidden
+    for (size_t i = 0; i < grad_hidden.size(); ++i) {
+        for (size_t j = 0; j < grad_hidden[i].size(); ++j) {
+            grad_hidden[i][j] *= (grad_hidden[i][j] > 0) ? 1.0f : GLOBAL_LEAKY_SLOPE;
+        }
+    }
+
+    // Step 3: Compute gradients for weights1
+    auto weights1_transposed = Utils::transpose(weights1);
+    auto grad_input = Utils::matmul(grad_hidden, weights1_transposed);
+
+    return grad_input;
+}
+

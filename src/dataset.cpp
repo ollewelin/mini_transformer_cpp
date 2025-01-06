@@ -15,7 +15,7 @@ std::vector<int> tokenize(const std::string &sentence, const std::unordered_map<
         word.erase(std::remove_if(word.begin(), word.end(), ispunct), word.end());
 
         // Add token or unknown token (0)
-        tokens.push_back(vocab.count(word) ? vocab.at(word) : 0);
+        tokens.push_back(vocab.count(word) ? vocab.at(word) : 1);//{"[PAD]", 0}, {"[UNK]", 1}
     }
 
     return tokens;

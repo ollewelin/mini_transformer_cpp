@@ -27,6 +27,10 @@ public:
     //       This ratio balances the model's capacity with computational efficiency.
 
     std::vector<std::vector<float>> forward(const std::vector<std::vector<float>>& input);
+
+     // Backward pass to compute gradients
+    std::vector<std::vector<float>> backward(const std::vector<std::vector<float>>& grad_output);
+   
     // Save weights to binary files
     void save_weights(int layer_index);
 

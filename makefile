@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -g -Wall -Iinclude -std=c++17
 
 TARGET = transformer_app
-SRCS = src/main.cpp src/attention.cpp src/embedding.cpp src/feed_forward.cpp src/positional_encoding.cpp src/transformer.cpp src/utils.cpp src/config.cpp src/dataset.cpp
+SRCS = src/main.cpp src/attention.cpp src/embedding.cpp src/feed_forward.cpp src/positional_encoding.cpp src/transformer.cpp src/utils.cpp src/config.cpp src/dataset.cpp src/layer_normalization.cpp
 OBJS = $(patsubst src/%.cpp,build/%.o,$(SRCS))
 
 all: build/$(TARGET)

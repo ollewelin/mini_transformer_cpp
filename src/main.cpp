@@ -533,14 +533,14 @@ int main() {
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
 
     // ============== Training loop ===================
-    int epochs = 1000;
+    int epochs = 100;
     // Initialize velocity for weights and bias
     std::vector<std::vector<float>> velocity_weights(final_weights.size(),
                                                      std::vector<float>(final_weights[0].size(), 0.0f));
     std::vector<float> velocity_bias(final_bias.size(), 0.0f);
 
-    float learning_rate = 0.01;
-    float momentum = 0.9;
+    float learning_rate = GLOBAL_learning_rate;
+    float momentum = GLOBAL_momentum;
 
     // Training loop with gradient computation
     for (int epoch = 1; epoch <= epochs; ++epoch)
@@ -651,7 +651,7 @@ int main() {
             // Backpropagate gradient through the Transformer
 
             //TODO
-         //mak   transformer.backward(grad_pooled);
+           transformer.backward(grad_pooled);
 
             //print_out_probabilities(probabilities, padded_input);// Print probabilities for debugging
             // Compute loss and accumulate
@@ -666,12 +666,12 @@ int main() {
 
     // Save final layer weights (optional)
     save_final_layer_weights(final_weights, final_bias);
-    //transformer.save_layer_norm_weights();
     transformer.save_embedding_matrix();
     transformer.save_attention_weights();
     transformer.save_feed_forward_weights();    
+    transformer.save_LayerNormalization_weights();
 
-
+    cout << "debug 1" << endl;
 #endif
 
     return 0;

@@ -99,6 +99,32 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_par
     }
 #endif
 }
+// Backward pass for MultiHeadAttention
+std::vector<std::vector<float>> MultiHeadAttention::backward(
+    const std::vector<std::vector<float>>& grad_output
+) {
+    // Transpose the weights
+    auto weights_q_transposed = Utils::transpose(weights_q);
+    auto weights_k_transposed = Utils::transpose(weights_k);
+    auto weights_v_transposed = Utils::transpose(weights_v);
+
+    // Backpropagate through the attention output
+    auto grad_attention_output = grad_output;
+
+    // Compute gradients for value weights
+    auto grad_value = Utils::matmul(grad_attention_output, weights_v_transposed);
+
+    // Backpropagate through scaled dot-product attention
+    auto grad_query_key = Utils::matmul(grad_attention_output, weights_q_transposed);
+
+    // Compute gradients for key and query
+    auto grad_query = Utils::matmul(grad_query_key, weights_k_transposed);
+    auto grad_key = Utils::matmul(Utils::transpose(grad_query_key), query_cache);
+
+    // Return gradient for the input query
+    return grad_query;
+}
+
 
 void MultiHeadAttention::save_weights(int layer_index) {
     const std::string weights_q_file = file_prefix_attention_weights_q_layer_ + std::to_string(layer_index) + ".bin";
@@ -136,6 +162,11 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
     const std::vector<std::vector<float>> &value,
     const std::vector<int>& padding_mask)
 {
+    // Cache the query, key, and value inputs for backpropagation
+    query_cache = query;
+    key_cache = key;
+    value_cache = value;
+
     // 1. Linear transformations for Q, K, V
     auto Q = Utils::matmul(query, weights_q); // Query * weights_q
     auto K = Utils::matmul(key, weights_k);   // Key * weights_k

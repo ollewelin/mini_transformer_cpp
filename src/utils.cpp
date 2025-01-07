@@ -61,6 +61,19 @@ std::vector<std::vector<float>> Utils::leaky_relu(const std::vector<std::vector<
     }
     return output;
 }
+float Utils::leaky_relu_derivative(float x) {
+    return (x > 0) ? 1.0f : GLOBAL_LEAKY_SLOPE;
+}
+
+std::vector<std::vector<float>> Utils::leaky_relu_derivative(const std::vector<std::vector<float>>& input) {
+    std::vector<std::vector<float>> output = input;
+    for (auto& row : output) {
+        for (auto& val : row) {
+            val = leaky_relu_derivative(val);
+        }
+    }
+    return output;
+}
 
 
 namespace Utils {

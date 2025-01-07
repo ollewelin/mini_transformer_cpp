@@ -52,8 +52,12 @@ std::vector<std::vector<float>> LayerNormalization::forward(const std::vector<st
 
     return output;
 }
-
-std::vector<std::vector<float>> LayerNormalization::backward(const std::vector<std::vector<float>>& grad_output, const std::vector<std::vector<float>>& input, float epsilon) {
+std::vector<std::vector<float>> LayerNormalization::backward(
+    const std::vector<std::vector<float>>& grad_output,
+    const std::vector<std::vector<float>>& input,
+    float epsilon
+)
+{    // Compute gradients as before
     size_t rows = input.size();
     size_t cols = input[0].size();
     std::vector<std::vector<float>> grad_input(rows, std::vector<float>(cols));

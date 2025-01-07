@@ -65,26 +65,46 @@ void FeedForward::save_weights(int layer_index) {
         exit(EXIT_FAILURE);
     }
 }
-std::vector<std::vector<float>> FeedForward::forward(const std::vector<std::vector<float>>& input)
-{
+
+std::vector<std::vector<float>> FeedForward::forward(const std::vector<std::vector<float>>& input) {
+    input_activations = input; // Cache input for backpropagation
+
     // Step 1: Linear transformation with weights1
-    auto hidden = Utils::matmul(input, weights1);
+    hidden_activations = Utils::matmul(input, weights1);
 
     // Step 2: Apply ReLU activation
-    for (auto& row : hidden) {
+    for (auto& row : hidden_activations) {
         for (auto& val : row) {
-            //val = std::max(0.0f, val); // ReLU activation
-            val = Utils::leaky_relu(val); // ReLU Leaky activation
+            val = Utils::leaky_relu(val);
         }
     }
 
     // Step 3: Linear transformation with weights2
-    auto output = Utils::matmul(hidden, weights2);
-
-    return output;
+    return Utils::matmul(hidden_activations, weights2);
 }
 
+
 std::vector<std::vector<float>> FeedForward::backward(const std::vector<std::vector<float>>& grad_output) {
+    auto weights2_transposed = Utils::transpose(weights2);
+    auto grad_hidden = Utils::matmul(grad_output, weights2_transposed);
+
+    for (size_t i = 0; i < grad_hidden.size(); ++i) {
+        for (size_t j = 0; j < grad_hidden[i].size(); ++j) {
+            grad_hidden[i][j] *= Utils::leaky_relu_derivative(hidden_activations[i][j]);
+        }
+    }
+
+    auto weights1_transposed = Utils::transpose(weights1);
+    return Utils::matmul(grad_hidden, weights1_transposed);
+}
+/*
+std::vector<std::vector<float>> FeedForward::backward(const std::vector<std::vector<float>>& grad_output) {
+    // Initialize velocity terms for momentum (if not already initialized)
+    if (velocity_weights1.empty()) {
+        velocity_weights1 = std::vector<std::vector<float>>(weights1.size(), std::vector<float>(weights1[0].size(), 0.0f));
+        velocity_weights2 = std::vector<std::vector<float>>(weights2.size(), std::vector<float>(weights2[0].size(), 0.0f));
+    }
+
     // Step 1: Compute gradients for weights2
     auto weights2_transposed = Utils::transpose(weights2);
     auto grad_hidden = Utils::matmul(grad_output, weights2_transposed);
@@ -92,14 +112,34 @@ std::vector<std::vector<float>> FeedForward::backward(const std::vector<std::vec
     // Step 2: Apply derivative of ReLU activation to grad_hidden
     for (size_t i = 0; i < grad_hidden.size(); ++i) {
         for (size_t j = 0; j < grad_hidden[i].size(); ++j) {
-            grad_hidden[i][j] *= (grad_hidden[i][j] > 0) ? 1.0f : GLOBAL_LEAKY_SLOPE;
+            grad_hidden[i][j] *= Utils::leaky_relu_derivative(hidden_activations[i][j]);
         }
     }
 
     // Step 3: Compute gradients for weights1
-    auto weights1_transposed = Utils::transpose(weights1);
-    auto grad_input = Utils::matmul(grad_hidden, weights1_transposed);
+    auto grad_weights2 = Utils::matmul(Utils::transpose(hidden_activations), grad_output);
+    auto grad_weights1 = Utils::matmul(Utils::transpose(input_activations), grad_hidden);
 
-    return grad_input;
+    // Step 4: Update weights using SGD with momentum
+    for (size_t i = 0; i < weights1.size(); ++i) {
+        for (size_t j = 0; j < weights1[i].size(); ++j) {
+            velocity_weights1[i][j] = GLOBAL_momentum * velocity_weights1[i][j] - GLOBAL_learning_rate * grad_weights1[i][j];
+            weights1[i][j] += velocity_weights1[i][j];
+        }
+    }
+
+    for (size_t i = 0; i < weights2.size(); ++i) {
+        for (size_t j = 0; j < weights2[i].size(); ++j) {
+            velocity_weights2[i][j] = GLOBAL_momentum * velocity_weights2[i][j] - GLOBAL_learning_rate * grad_weights2[i][j];
+            weights2[i][j] += velocity_weights2[i][j];
+        }
+    }
+
+    // Step 5: Compute and return gradients for the input
+    auto weights1_transposed = Utils::transpose(weights1);
+    return Utils::matmul(grad_hidden, weights1_transposed);
 }
+
+*/
+
 

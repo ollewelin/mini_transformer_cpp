@@ -51,3 +51,11 @@ std::vector<std::vector<float>> PositionalEncoding::add_positional_encoding(cons
 
     return result;
 }
+
+// Backward function
+std::vector<std::vector<float>> PositionalEncoding::backward(
+    const std::vector<std::vector<float>>& grad_output
+) {
+    // Positional encoding is not trainable, so the gradient is directly passed through
+    return grad_output;
+}

@@ -31,75 +31,98 @@ void Transformer::save_feed_forward_weights()
     }
 }
 
-
+void Transformer::save_LayerNormalization_weights()
+{
+    for (int i = 0; i < num_layers_local; i++)
+    {
+        //TODO
+       // layer_norms[i*2].save_parameters(i*2);
+       // layer_norms[i*2+1].save_parameters(i*2+1);
+    }
+}
 std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& input, const std::vector<int>& padding_mask) {
     // Step 1: Embedding and positional encoding
     std::vector<std::vector<float>> output = embedding.forward(input);
     output = pos_encoding.add_positional_encoding(output);
+    input_tokens = input;//Used for backprop
+    // Clear caches for this pass
+
+    residual_connections.clear();
+    attention_outputs.clear();
+    normalized_attention_outputs.clear();
+    feedforward_outputs.clear();
+    normalized_feedforward_outputs.clear();
 
     // Step 2: Iterate through attention and feedforward layers
     for (size_t i = 0; i < attention_layers.size(); ++i) {
         // Save the input for residual connection
-        auto residual = output;
+        residual_connections.push_back(output);
 
         // Apply MultiHeadAttention with padding mask
-        output = attention_layers[i].forward(output, output, output, padding_mask);// Self-attention
+        auto attention_output = attention_layers[i].forward(output, output, output, padding_mask);
+        attention_outputs.push_back(attention_output);
 
         // Mask padding in attention output
-        output = Utils::mask_padding(output, padding_mask);
+        auto masked_attention_output = Utils::mask_padding(attention_output, padding_mask);
 
         // Add residual connection and apply layer normalization
-        output = layer_norms[i*2].forward(add_matrices(residual, output));// Residual + Attentions
+       // auto norm_attention_output = layer_norms[i * 2].forward(add_matrices(residual_connections.back(), masked_attention_output));
+        auto norm_attention_output = add_matrices(residual_connections.back(), masked_attention_output);
+        normalized_attention_outputs.push_back(norm_attention_output);
 
         // Mask padding in normalization output
-        output = Utils::mask_padding(output, padding_mask);
+        output = Utils::mask_padding(norm_attention_output, padding_mask);
 
         // Save the input for residual connection before FeedForward
-        residual = output;
+        residual_connections.push_back(output);
 
         // Apply FeedForward
-        output = feed_forward_layers[i].forward(output);
+        auto feedforward_output = feed_forward_layers[i].forward(output);
+        feedforward_outputs.push_back(feedforward_output);
 
         // Mask padding in feedforward output
-        output = Utils::mask_padding(output, padding_mask);
+        auto masked_feedforward_output = Utils::mask_padding(feedforward_output, padding_mask);
 
         // Add residual connection and apply layer normalization
-        output = layer_norms[i*2+1].forward(add_matrices(residual, output));// Residual + FFN
+       // auto norm_feedforward_output = layer_norms[i * 2 + 1].forward(add_matrices(residual_connections.back(), masked_feedforward_output));
+        auto norm_feedforward_output = add_matrices(residual_connections.back(), masked_feedforward_output);
+        normalized_feedforward_outputs.push_back(norm_feedforward_output);
 
         // Mask padding in final normalized output
-        output = Utils::mask_padding(output, padding_mask);
+        output = Utils::mask_padding(norm_feedforward_output, padding_mask);
     }
 
     return output;
 }
 
-/*
-// Backward pass implementation for the Transformer
-void Transformer::backward(const std::vector<std::vector<float>>& grad_pooled) {
-    // Step 1: Backpropagate through the final feedforward layer
+
+std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vector<float>>& grad_pooled) {
     auto grad_ff = feed_forward_layers.back().backward(grad_pooled);
 
-    // Step 2: Backpropagate through the attention layers in reverse order
     for (int i = attention_layers.size() - 1; i >= 0; --i) {
-        // Step 2.1: Backpropagate through the feedforward layers within the block
+        // Backpropagate through feedforward layers
         auto grad_ffn = feed_forward_layers[i].backward(grad_ff);
 
-        // Step 2.2: Backpropagate through residual connections and layer normalization
-        grad_ffn = layer_norms[i].backward(grad_ffn);
+        // Backpropagate through residual connections and layer normalization
+     //   grad_ffn = layer_norms[i * 2 + 1].backward(grad_ffn, feedforward_outputs[i]);
 
-        // Step 2.3: Backpropagate through the multi-head attention layer
+        // Backpropagate through attention layers
         auto grad_attn = attention_layers[i].backward(grad_ffn);
 
-        // Update the gradient for the next block
-        grad_ff = grad_attn;
+        // Backpropagate through residual connections and layer normalization
+     //   grad_ff = layer_norms[i * 2].backward(grad_attn, attention_outputs[i]);
     }
 
-    // Step 3: Backpropagate through positional encoding
+    // Backpropagate through positional encoding
     auto grad_pos = pos_encoding.backward(grad_ff);
 
-    // Step 4: Backpropagate through the embedding layer
-    embedding.backward(grad_pos);
+    // Backpropagate through embedding
+    // Assuming `input_tokens` is the tokenized input to the Transformer (from the forward pass)
+    float learning_rate = 0.01;
+    embedding.apply_gradients(input_tokens, grad_pos, learning_rate);
+
+    return grad_pos; // Return gradient for external validation (optional)
 }
 
-*/
+
 

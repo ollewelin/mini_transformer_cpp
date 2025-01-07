@@ -79,3 +79,14 @@ void Embedding::apply_gradients(const std::vector<int>& input, const std::vector
         }
     }
 }
+/*
+// Apply gradients
+void Embedding::apply_gradients(const std::vector<int>& input, const std::vector<std::vector<float>>& grad_embedding, float learning_rate) {
+    for (size_t i = 0; i < input.size(); ++i) {
+        int idx = input[i];
+        for (size_t j = 0; j < grad_embedding[i].size(); ++j) {
+            embedding_matrix[idx][j] -= learning_rate * grad_embedding[i][j];
+        }
+    }
+}
+*/

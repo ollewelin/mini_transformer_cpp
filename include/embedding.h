@@ -2,8 +2,10 @@
 #define EMBEDDING_H
 
 #include <vector>
+#include <string>
 #include "config.h"
 #include <iostream>
+
 class Embedding {
 public:
     // Constructor with optional file loading
@@ -11,6 +13,9 @@ public:
 
     // Forward pass
     std::vector<std::vector<float>> forward(const std::vector<int>& input);
+
+    // Backward pass
+    void backward(const std::vector<std::vector<float>>& grad_embedding);
 
     // Apply gradients to the embedding matrix
     void apply_gradients(const std::vector<int>& input, const std::vector<std::vector<float>>& grad_embedding, float learning_rate);

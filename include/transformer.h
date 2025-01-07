@@ -36,11 +36,12 @@ public:
     }
 
     std::vector<std::vector<float>> forward(const std::vector<int>& input, const std::vector<int>& padding_mask);
- //   std::vector<std::vector<float>> backward(const std::vector<std::vector<float>>& grad_pooled);
+    std::vector<std::vector<float>> backward(const std::vector<std::vector<float>>& grad_pooled);
 
     void save_embedding_matrix();
     void save_attention_weights();
     void save_feed_forward_weights();
+    void save_LayerNormalization_weights();
 
 private:
     Embedding embedding;
@@ -50,6 +51,14 @@ private:
 
     // New layer normalization objects
     std::vector<LayerNormalization> layer_norms;
+
+    // Intermediate values for backpropagation
+    std::vector<int> input_tokens;
+    std::vector<std::vector<std::vector<float>>> residual_connections;
+    std::vector<std::vector<std::vector<float>>> attention_outputs;
+    std::vector<std::vector<std::vector<float>>> normalized_attention_outputs;
+    std::vector<std::vector<std::vector<float>>> feedforward_outputs;
+    std::vector<std::vector<std::vector<float>>> normalized_feedforward_outputs;
 
     // Helper functions
     std::vector<std::vector<float>> add_matrices(const std::vector<std::vector<float>> &a, const std::vector<std::vector<float>> &b);

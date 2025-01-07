@@ -20,7 +20,9 @@ public:
     
     // Save weights to binary files
     void save_weights(int layer_index);
-
+    std::vector<std::vector<float>> backward(
+        const std::vector<std::vector<float>>& grad_output // Gradient from the next layer
+    );
 #ifdef TEST_ATTENTION
 public:
 #else
@@ -53,6 +55,10 @@ private:
     static const std::string file_prefix_attention_weights_q_layer_;
     static const std::string file_prefix_attention_weights_k_layer_;
     static const std::string file_prefix_attention_weights_v_layer_;
+
+    std::vector<std::vector<float>> query_cache; // Cache for query input during forward pass
+    std::vector<std::vector<float>> key_cache;   // Cache for key input (if needed)
+    std::vector<std::vector<float>> value_cache; // Cache for value input (if needed)
 
 };
 

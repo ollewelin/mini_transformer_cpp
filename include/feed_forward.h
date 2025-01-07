@@ -35,9 +35,15 @@ public:
     void save_weights(int layer_index);
 
 private:
+    std::vector<std::vector<float>> velocity_weights1; // Momentum for weights1
+    std::vector<std::vector<float>> velocity_weights2; // Momentum for weights2
+    std::vector<std::vector<float>> input_activations; // Cache input for backward pass
+    std::vector<std::vector<float>> hidden_activations; // Cache activations for backpropagation
+ 
     std::vector<std::vector<float>> weights1; // First linear layer weights
     std::vector<std::vector<float>> weights2; // Second linear layer weights
     static const std::string file_prefix_feed_forward_weights;
+   
 
 };
 #endif // FEED_FORWARD_H

@@ -10,5 +10,6 @@
 //#define DEBUG_PRINT_MAIN
 // Declare global variables (using extern)
 extern float GLOBAL_LEAKY_SLOPE;
-
+extern float GLOBAL_learning_rate;
+extern float GLOBAL_momentum ;
 #endif // CONFIG_H

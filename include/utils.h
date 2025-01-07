@@ -28,6 +28,9 @@ namespace Utils {
 
     // Leaky ReLU for a single float
     float leaky_relu(float x);
+    
+    float leaky_relu_derivative(float x);
+    std::vector<std::vector<float>> leaky_relu_derivative(const std::vector<std::vector<float>>& input);
 
     // Leaky ReLU for a matrix
     std::vector<std::vector<float>> leaky_relu(const std::vector<std::vector<float>>& input);

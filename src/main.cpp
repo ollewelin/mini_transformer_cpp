@@ -533,7 +533,7 @@ int main() {
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
 
     // ============== Training loop ===================
-    int epochs = 100;
+    int epochs = 2000;
     // Initialize velocity for weights and bias
     std::vector<std::vector<float>> velocity_weights(final_weights.size(),
                                                      std::vector<float>(final_weights[0].size(), 0.0f));
@@ -650,7 +650,7 @@ int main() {
 
             // Backpropagate gradient through the Transformer
 
-            //TODO
+            
            transformer.backward(grad_pooled);
 
             //print_out_probabilities(probabilities, padded_input);// Print probabilities for debugging

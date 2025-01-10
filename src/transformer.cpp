@@ -1,5 +1,5 @@
 #include "transformer.h"
-
+using namespace std;
 std::vector<std::vector<float>> Transformer::add_matrices(const std::vector<std::vector<float>> &a, const std::vector<std::vector<float>> &b) {
     if (a.size() != b.size() || a[0].size() != b[0].size()) {
         throw std::invalid_argument("Matrix dimensions must match for addition.");
@@ -60,7 +60,7 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
 
         // Apply MultiHeadAttention with padding mask
         auto attention_output = attention_layers[i].forward(output, output, output, padding_mask);
-        attention_outputs.push_back(attention_output);
+    //    attention_outputs.push_back(attention_output);
 
         // Mask padding in attention output
         auto masked_attention_output = Utils::mask_padding(attention_output, padding_mask);
@@ -68,7 +68,7 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
         // Add residual connection and apply layer normalization
        // auto norm_attention_output = layer_norms[i * 2].forward(add_matrices(residual_connections.back(), masked_attention_output));
         auto norm_attention_output = add_matrices(residual_connections.back(), masked_attention_output);
-        normalized_attention_outputs.push_back(norm_attention_output);
+    //    normalized_attention_outputs.push_back(norm_attention_output);
 
         // Mask padding in normalization output
         output = Utils::mask_padding(norm_attention_output, padding_mask);
@@ -78,7 +78,7 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
 
         // Apply FeedForward
         auto feedforward_output = feed_forward_layers[i].forward(output);
-        feedforward_outputs.push_back(feedforward_output);
+      //  feedforward_outputs.push_back(feedforward_output);
 
         // Mask padding in feedforward output
         auto masked_feedforward_output = Utils::mask_padding(feedforward_output, padding_mask);
@@ -86,7 +86,7 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
         // Add residual connection and apply layer normalization
        // auto norm_feedforward_output = layer_norms[i * 2 + 1].forward(add_matrices(residual_connections.back(), masked_feedforward_output));
         auto norm_feedforward_output = add_matrices(residual_connections.back(), masked_feedforward_output);
-        normalized_feedforward_outputs.push_back(norm_feedforward_output);
+    //    normalized_feedforward_outputs.push_back(norm_feedforward_output);
 
         // Mask padding in final normalized output
         output = Utils::mask_padding(norm_feedforward_output, padding_mask);
@@ -95,7 +95,7 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
     return output;
 }
 
-
+/*
 std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vector<float>>& grad_pooled) {
     auto grad_ff = feed_forward_layers.back().backward(grad_pooled);
 
@@ -120,9 +120,38 @@ std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vec
     // Assuming `input_tokens` is the tokenized input to the Transformer (from the forward pass)
     float learning_rate = 0.01;
     embedding.apply_gradients(input_tokens, grad_pos, learning_rate);
-
+    
     return grad_pos; // Return gradient for external validation (optional)
 }
+*/
 
 
+std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vector<float>>& grad_pooled) {
+    auto grad_ff = feed_forward_layers.back().backward(grad_pooled);
+    residual_connections.clear();
+    for (int i = attention_layers.size() - 1; i >= 0; --i) {
+        residual_connections.clear();
+        residual_connections.push_back(grad_ff);
+        // Backprop feedforward
+        auto grad_ffn = feed_forward_layers[i].backward(grad_ff);
+        grad_ffn = add_matrices(grad_ffn, residual_connections.back());
+        // --- NEW: Update feed-forward weights after backward
+        feed_forward_layers[i].update_weights();
+        // Backprop attention
+        residual_connections.clear();
+        residual_connections.push_back(grad_ff);
+        auto grad_attn = attention_layers[i].backward(grad_ffn);
+        grad_ffn = add_matrices(grad_ffn, residual_connections.back());
+        // --- You would similarly call attention_layers[i].update_weights(), 
+        //     if you implement a similar update method for the attention layer.
+    }
 
+    // Backprop positional encoding
+    auto grad_pos = pos_encoding.backward(grad_ff);
+    
+    // Backprop embedding
+    float learning_rate = 0.01;
+    embedding.apply_gradients(input_tokens, grad_pos, learning_rate);
+
+    return grad_pos;
+}

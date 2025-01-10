@@ -30,7 +30,9 @@ public:
 
      // Backward pass to compute gradients
     std::vector<std::vector<float>> backward(const std::vector<std::vector<float>>& grad_output);
-   
+
+       // New method to update weights AFTER backward pass
+    void update_weights();
     // Save weights to binary files
     void save_weights(int layer_index);
 
@@ -42,7 +44,12 @@ private:
  
     std::vector<std::vector<float>> weights1; // First linear layer weights
     std::vector<std::vector<float>> weights2; // Second linear layer weights
+    // NEW: We store the gradients for weights1 and weights2 
+    //      that we compute during backward().
+    std::vector<std::vector<float>> grad_weights1;
+    std::vector<std::vector<float>> grad_weights2;    
     static const std::string file_prefix_feed_forward_weights;
+
    
 
 };

@@ -28,8 +28,8 @@ public:
         {
             attention_layers.emplace_back(d_model, num_heads, load_parameters_yes_no, i);
             feed_forward_layers.emplace_back(d_model, d_ff, load_parameters_yes_no, i);
-            layer_norms.emplace_back(d_model, load_parameters_yes_no, i*2);// Instantiate layer normalization object
-            layer_norms.emplace_back(d_model, load_parameters_yes_no, i*2+1);
+         //   layer_norms.emplace_back(d_model, load_parameters_yes_no, i*2);// Instantiate layer normalization object
+         //   layer_norms.emplace_back(d_model, load_parameters_yes_no, i*2+1);
         }
 
         std::cout << "Transformer initialized with " << num_layers << " layers." << std::endl;
@@ -50,7 +50,7 @@ private:
     std::vector<FeedForward> feed_forward_layers;
 
     // New layer normalization objects
-    std::vector<LayerNormalization> layer_norms;
+ //   std::vector<LayerNormalization> layer_norms;
 
     // Intermediate values for backpropagation
     std::vector<int> input_tokens;

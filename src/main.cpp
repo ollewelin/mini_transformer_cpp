@@ -18,6 +18,51 @@ using namespace std;
 #include <random>    // For random number generation
 #include <chrono>    // For seeding random number generator
 
+
+
+
+#ifdef TEST_FEEDFORWARD_TRAIN
+#include "feed_forward.h"
+#include <cmath>
+#include <random> // std::mt19937, std::uniform_real_distribution
+#include <ctime>  // std::time
+
+// Simple MSE loss function for 2D outputs
+float mse_loss(const std::vector<std::vector<float>>& predictions,
+               const std::vector<std::vector<float>>& targets)
+{
+    float total = 0.0f;
+    int count = 0;
+    for (size_t i = 0; i < predictions.size(); ++i) {
+        for (size_t j = 0; j < predictions[i].size(); ++j) {
+            float diff = predictions[i][j] - targets[i][j];
+            total += diff * diff;
+            ++count;
+        }
+    }
+    return total / static_cast<float>(count);
+}
+
+// Gradient of MSE w.r.t. predictions
+std::vector<std::vector<float>> mse_loss_grad(
+    const std::vector<std::vector<float>>& predictions,
+    const std::vector<std::vector<float>>& targets)
+{
+    std::vector<std::vector<float>> grad(predictions.size(),
+                                         std::vector<float>(predictions[0].size(), 0.0f));
+    for (size_t i = 0; i < predictions.size(); ++i) {
+        for (size_t j = 0; j < predictions[i].size(); ++j) {
+            // d/dy of 0.5*(y - t)^2 = (y - t). 
+            // (You can omit the 0.5 if you want; it just scales the gradient.)
+            grad[i][j] = (predictions[i][j] - targets[i][j]);
+        }
+    }
+    return grad;
+}
+
+
+#endif // TEST_FEEDFORWARD_TRAIN
+
 // Cross-entropy loss gradient
 std::vector<float> cross_entropy_loss_gradient(const std::vector<float>& probabilities, int label) {
     std::vector<float> gradient(probabilities.size(), 0.0f);
@@ -200,6 +245,123 @@ void print_out_probabilities(std::vector<float> probabilities, std::vector<int> 
 
 
 int main() {
+    
+    bool load_parameters_yes_no = false;
+
+#ifdef TEST_FEEDFORWARD_TRAIN
+    // -------------------------------------------------------------
+    // 1) Setup: Create two feed-forward layers
+    // -------------------------------------------------------------
+    //bool load_parameters_yes_no = false; // For this test, random init is fine
+    int layer_index_1 = 0; 
+    int layer_index_2 = 1; 
+    int layer_index_3 = 2;
+    int layer_index_4 = 3; 
+    // Typically defined in config.h:
+    GLOBAL_learning_rate = 0.001f;
+    GLOBAL_momentum      = 0.9f;
+
+    FeedForward ff1(/*d_model=*/2, /*d_ff=*/50, load_parameters_yes_no, layer_index_1);
+    FeedForward ff2(/*d_model=*/2, /*d_ff=*/50, load_parameters_yes_no, layer_index_2);
+    FeedForward ff3(/*d_model=*/2, /*d_ff=*/50, load_parameters_yes_no, layer_index_3);
+    FeedForward ff4(/*d_model=*/2, /*d_ff=*/50, load_parameters_yes_no, layer_index_4);
+
+    // -------------------------------------------------------------
+    // 2) More advanced training data
+    //    We'll generate random (x1, x2) in some range, and define
+    //    the target as [sin(x1 + x2), x1^2 - x2^2].
+    // -------------------------------------------------------------
+    std::vector<std::vector<float>> inputs;
+    std::vector<std::vector<float>> targets;
+
+    std::mt19937 rng(static_cast<unsigned int>(std::time(nullptr)));
+    std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+
+    const int num_samples = 1000;
+    for (int i = 0; i < num_samples; ++i) {
+        float x1 = dist(rng);
+        float x2 = dist(rng);
+
+        float t1 = std::sin(x1 + x2);   // Example nonlinear function
+        float t2 = (x1 * x1) - (x2 * x2);
+
+        inputs.push_back({x1, x2});
+        targets.push_back({t1, t2});
+    }
+
+    // -------------------------------------------------------------
+    // 3) Training loop
+    // -------------------------------------------------------------
+    int epochs_test = 200;
+    for (int epoch = 1; epoch <= epochs_test; ++epoch)
+    {
+        float total_loss = 0.0f;
+
+        // In a real setting, you could shuffle the data each epoch
+        for (size_t i = 0; i < inputs.size(); ++i)
+        {
+            // Wrap the single example into shape [1 x 2]
+            std::vector<std::vector<float>> x_input = { inputs[i] };
+            std::vector<std::vector<float>> y_target = { targets[i] };
+
+            // Forward pass
+            auto out1 = ff1.forward(x_input); // [1 x 2]
+            auto out2 = ff2.forward(out1);    // [1 x 2]
+            auto out3 = ff3.forward(out2);    // [1 x 2]
+            auto out4 = ff4.forward(out3);    // [1 x 2]
+
+            // Compute MSE loss
+            float loss = mse_loss(out4, y_target);
+            total_loss += loss;
+
+            // Compute gradient of MSE w.r.t. out2
+            auto grad_out2 = mse_loss_grad(out4, y_target);
+            auto grad_ff4 = ff4.backward(grad_out2); 
+            auto grad_ff3 = ff3.backward(grad_ff4);           
+            auto grad_ff2 = ff2.backward(grad_ff3);
+            // Backprop through first feedforward
+            auto grad_ff1 = ff1.backward(grad_ff2);
+
+            // Update weights
+            ff4.update_weights();
+            ff3.update_weights();                        
+            ff2.update_weights();
+            ff1.update_weights();
+        }
+
+        float avg_loss = total_loss / inputs.size();
+        if (epoch < 50) {
+            std::cout << "Epoch " << epoch
+                      << " - MSE Loss: " << avg_loss << std::endl;
+        }        
+        if (epoch % 50 == 0) {
+            std::cout << "Epoch " << epoch
+                      << " - MSE Loss: " << avg_loss << std::endl;
+        }
+    }
+
+    // -------------------------------------------------------------
+    // 4) Test final results
+    // -------------------------------------------------------------
+    std::cout << "\n=== After Training, check predictions ===\n";
+    for (int i = 0; i < 5; ++i) // Print first 5 random examples
+    {
+        std::vector<std::vector<float>> x_input = { inputs[i] };
+        auto out1 = ff1.forward(x_input); // [1 x 2]
+        auto out2 = ff2.forward(out1);    // [1 x 2]
+        auto out3 = ff3.forward(out2);    // [1 x 2]
+        auto out4 = ff4.forward(out3);    // [1 x 2]
+
+        std::cout << "x1=" << inputs[i][0] 
+                  << ", x2=" << inputs[i][1]
+                  << " -> Prediction: ["
+                  << out4[0][0] << ", " << out4[0][1] << "]"
+                  << " | Target: ["
+                  << targets[i][0] << ", " << targets[i][1] << "]\n";
+    }
+
+#endif // TEST_FEEDFORWARD_TRAIN
+
     cout << "========================================================================================================" << endl;
     cout << "Transformer Test in Mini Format (C/C++) - No Use of ML Libraries" << endl;
     cout << "The goal is to build and understand the Transformer algorithm from scratch using pure C++." << endl;
@@ -209,8 +371,7 @@ int main() {
     std::string choice;
     std::cin >> choice;
 
-    bool load_parameters_yes_no = false;
-    if (choice == "/Y" || choice == "y")
+     if (choice == "/Y" || choice == "y")
     {
         load_parameters_yes_no = true; // Load from file
     }
@@ -494,8 +655,8 @@ int main() {
     vocab_size = vocab.size(); // Dynamically set to the actual vocabulary size
     cout << "vocab_size = " << vocab_size << endl;
 
-    d_model = 6;
-    d_ff = 24;
+    d_model = 25;
+    d_ff = 100;//24
 
     // Initialize final layer weights and bias
     int num_categories = 2; // Number of output categories (Question/Answer)
@@ -538,13 +699,23 @@ int main() {
     std::vector<std::vector<float>> velocity_weights(final_weights.size(),
                                                      std::vector<float>(final_weights[0].size(), 0.0f));
     std::vector<float> velocity_bias(final_bias.size(), 0.0f);
-
-    float learning_rate = GLOBAL_learning_rate;
-    float momentum = GLOBAL_momentum;
-
+    const float warm_up_factor = 1.0;
+    const int warm_up_epc_cnt = 100;
+    float GLOBAL_learning_rate = GLOBAL_CONST_learning_rate * warm_up_factor;
+    float GLOBAL_momentum = GLOBAL_CONST_momentum * warm_up_factor;
+    std::cout << "learning_rate: " << GLOBAL_learning_rate << std::endl;
+    std::cout << "momentum: " << GLOBAL_momentum << std::endl;
     // Training loop with gradient computation
     for (int epoch = 1; epoch <= epochs; ++epoch)
     {
+        if(epoch == warm_up_epc_cnt)
+        {
+            GLOBAL_learning_rate = GLOBAL_CONST_learning_rate;
+            GLOBAL_momentum = GLOBAL_CONST_momentum;
+            std::cout << "Set normal learning rate after warm up " << std::endl;
+            std::cout << "learning_rate: " << GLOBAL_learning_rate << std::endl;
+            std::cout << "momentum: " << GLOBAL_momentum << std::endl;            
+        }
         std::cout << "Epoch " << epoch << " / " << epochs << "\n";
 
         // Shuffle dataset
@@ -620,14 +791,14 @@ int main() {
             {
                 for (size_t k = 0; k < final_weights[0].size(); ++k)
                 {
-                    velocity_weights[j][k] = momentum * velocity_weights[j][k] - learning_rate * grad_final_weights[j][k];
+                    velocity_weights[j][k] = GLOBAL_momentum * velocity_weights[j][k] - GLOBAL_learning_rate * grad_final_weights[j][k];
                     final_weights[j][k] += velocity_weights[j][k];
                 }
             }
 
             for (size_t k = 0; k < final_bias.size(); ++k)
             {
-                velocity_bias[k] = momentum * velocity_bias[k] - learning_rate * grad_final_bias[k];
+                velocity_bias[k] = GLOBAL_momentum * velocity_bias[k] - GLOBAL_learning_rate * grad_final_bias[k];
                 final_bias[k] += velocity_bias[k];
             }
 

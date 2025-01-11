@@ -141,7 +141,9 @@ std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vec
         residual_connections.clear();
         residual_connections.push_back(grad_ff);
         auto grad_attn = attention_layers[i].backward(grad_ffn);
+        attention_layers[i].update_weights();
         grad_ffn = add_matrices(grad_ffn, residual_connections.back());
+        
         // --- You would similarly call attention_layers[i].update_weights(), 
         //     if you implement a similar update method for the attention layer.
     }
@@ -150,8 +152,7 @@ std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vec
     auto grad_pos = pos_encoding.backward(grad_ff);
     
     // Backprop embedding
-    float learning_rate = 0.01;
-    embedding.apply_gradients(input_tokens, grad_pos, learning_rate);
+    embedding.apply_gradients(input_tokens, grad_pos, GLOBAL_learning_rate);
 
     return grad_pos;
 }

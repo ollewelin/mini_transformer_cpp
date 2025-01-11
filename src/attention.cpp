@@ -11,9 +11,24 @@ const std::string MultiHeadAttention::file_prefix_attention_weights_k_layer_ = "
 const std::string MultiHeadAttention::file_prefix_attention_weights_v_layer_ = "attention_weights_v_layer_";
 
 MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_parameters_yes_no, int layer_index)
-    : weights_q(d_model, std::vector<float>(d_model, 0.0)),
-      weights_k(d_model, std::vector<float>(d_model, 0.0)),
-      weights_v(d_model, std::vector<float>(d_model, 0.0))
+    : weights_q(d_model, std::vector<float>(d_model, 0.0f)),
+      weights_k(d_model, std::vector<float>(d_model, 0.0f)),
+      weights_v(d_model, std::vector<float>(d_model, 0.0f)),
+
+      // Velocity (momentum) buffers
+      velocity_q(d_model, std::vector<float>(d_model, 0.0f)),
+      velocity_k(d_model, std::vector<float>(d_model, 0.0f)),
+      velocity_v(d_model, std::vector<float>(d_model, 0.0f)),
+
+      // Gradients
+      grad_weights_q(d_model, std::vector<float>(d_model, 0.0f)),
+      grad_weights_k(d_model, std::vector<float>(d_model, 0.0f)),
+      grad_weights_v(d_model, std::vector<float>(d_model, 0.0f)),
+
+      // Caches
+      query_cache(),
+      key_cache(),
+      value_cache()
 {
     const std::string weights_q_file = file_prefix_attention_weights_q_layer_ + std::to_string(layer_index) + ".bin";
     const std::string weights_k_file = file_prefix_attention_weights_k_layer_ + std::to_string(layer_index) + ".bin";
@@ -99,6 +114,7 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_par
     }
 #endif
 }
+/*
 // Backward pass for MultiHeadAttention
 std::vector<std::vector<float>> MultiHeadAttention::backward(
     const std::vector<std::vector<float>>& grad_output
@@ -124,6 +140,62 @@ std::vector<std::vector<float>> MultiHeadAttention::backward(
     // Return gradient for the input query
     return grad_query;
 }
+*/
+
+std::vector<std::vector<float>> MultiHeadAttention::backward(
+    const std::vector<std::vector<float>>& grad_output
+) {
+    // 1) Suppose grad_output is the gradient coming from the next layer 
+    //    w.r.t the output of the attention.
+    auto grad_attention_output = grad_output;
+
+    // 2) For the Value path:
+    //
+    //    - grad_w.r.t. weights_v = value_cache^T * grad_attention_output
+    //    - grad_w.r.t. input V   = grad_attention_output * weights_v^T
+    auto weights_v_transposed = Utils::transpose(weights_v);
+    grad_weights_v = Utils::matmul(Utils::transpose(value_cache), grad_attention_output);
+    auto grad_value = Utils::matmul(grad_attention_output, weights_v_transposed);
+
+    // 3) For the Query path:
+    //
+    //    - We might have a chunk of grad_attention_output that flows to Q
+    //      through your scaled_dot_product_attention. 
+    //      For simplicity, assume it is "grad_Q" here:
+    auto weights_q_transposed = Utils::transpose(weights_q);
+    // If you have a direct partial derivative w.r.t. Q from the attention, 
+    // it might be something like:
+    auto grad_Q = Utils::matmul(grad_attention_output, weights_q_transposed);
+    
+    // Then gradient w.r.t. weights_q:
+    grad_weights_q = Utils::matmul(Utils::transpose(query_cache), grad_attention_output);
+
+    // 4) For the Key path:
+    //
+    //    - Similarly, you'd have "grad_K"
+    auto weights_k_transposed = Utils::transpose(weights_k);
+    auto grad_K = Utils::matmul(grad_attention_output, weights_k_transposed);
+
+    // Then gradient w.r.t. weights_k:
+    grad_weights_k = Utils::matmul(Utils::transpose(key_cache), grad_attention_output);
+
+    // Compute gradients for key and query
+    auto grad_query = Utils::matmul(grad_Q, weights_k_transposed);
+    auto grad_key = Utils::matmul(Utils::transpose(grad_Q), query_cache);
+
+    // 5) Optionally, combine or do final partial derivatives from 
+    //    scaled_dot_product_attention. Often, you’d do the real 
+    //    attention backward pass:
+    //
+    //    auto grad_query = ... ; 
+    //    auto grad_key   = ... ; 
+    //    auto grad_value = ... ; 
+    //
+    // For a minimal example, let's return grad_query (the gradient 
+    // w.r.t. the original "query" input).
+    return grad_query; 
+}
+
 
 
 void MultiHeadAttention::save_weights(int layer_index) {
@@ -164,22 +236,62 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
 {
     // Cache the query, key, and value inputs for backpropagation
     query_cache = query;
-    key_cache = key;
+    key_cache   = key;
     value_cache = value;
 
     // 1. Linear transformations for Q, K, V
-    auto Q = Utils::matmul(query, weights_q); // Query * weights_q
-    auto K = Utils::matmul(key, weights_k);   // Key * weights_k
-    auto V = Utils::matmul(value, weights_v); // Value * weights_v
+    auto Q = Utils::matmul(query, weights_q);
+    auto K = Utils::matmul(key, weights_k);
+    auto V = Utils::matmul(value, weights_v);
 
     // 2. Scaled dot-product attention
-#ifndef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION     
+#ifndef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION
     auto attention_output = scaled_dot_product_attention(Q, K, V, padding_mask);
 #else
     auto attention_output = scaled_dot_product_attention_with_printout(Q, K, V);
 #endif
 
     return attention_output;
+}
+
+void MultiHeadAttention::update_weights()
+{
+    // Example: read from some config or define here
+    float learning_rate = GLOBAL_learning_rate; 
+    float momentum      = GLOBAL_momentum;  
+
+    // Update weights_q
+    for (size_t i = 0; i < weights_q.size(); i++) {
+        for (size_t j = 0; j < weights_q[0].size(); j++) {
+            // velocity_q = momentum * velocity_q + grad
+            velocity_q[i][j] = momentum * velocity_q[i][j] 
+                               + learning_rate * grad_weights_q[i][j];
+            // w_q -= velocity_q
+            weights_q[i][j] -= velocity_q[i][j];
+            // Optionally reset the grad to zero
+            grad_weights_q[i][j] = 0.0f;
+        }
+    }
+
+    // Update weights_k
+    for (size_t i = 0; i < weights_k.size(); i++) {
+        for (size_t j = 0; j < weights_k[0].size(); j++) {
+            velocity_k[i][j] = momentum * velocity_k[i][j] 
+                               + learning_rate * grad_weights_k[i][j];
+            weights_k[i][j] -= velocity_k[i][j];
+            grad_weights_k[i][j] = 0.0f;
+        }
+    }
+
+    // Update weights_v
+    for (size_t i = 0; i < weights_v.size(); i++) {
+        for (size_t j = 0; j < weights_v[0].size(); j++) {
+            velocity_v[i][j] = momentum * velocity_v[i][j]
+                               + learning_rate * grad_weights_v[i][j];
+            weights_v[i][j] -= velocity_v[i][j];
+            grad_weights_v[i][j] = 0.0f;
+        }
+    }
 }
 
 

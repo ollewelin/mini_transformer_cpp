@@ -7,9 +7,16 @@ FeedForward::FeedForward(int d_model, int d_ff, bool load_parameters_yes_no, int
     input_activations(d_model, std::vector<float>(d_ff, 0.0f)),
     hidden_activations(d_ff, std::vector<float>(d_model, 0.0f)),
     weights1(d_model, std::vector<float>(d_ff, 0.0f)),
-      weights2(d_ff, std::vector<float>(d_model, 0.0f)),
-      grad_weights1(d_model, std::vector<float>(d_ff, 0.0f)),
-      grad_weights2(d_ff, std::vector<float>(d_model, 0.0f))
+    weights2(d_ff, std::vector<float>(d_model, 0.0f)),
+    grad_weights1(d_model, std::vector<float>(d_ff, 0.0f)),
+    grad_weights2(d_ff, std::vector<float>(d_model, 0.0f)),
+    // Now for bias
+    bias1(d_ff, 0.0f),
+    bias2(d_model, 0.0f),
+    grad_bias1(d_ff, 0.0f),
+    grad_bias2(d_model, 0.0f),
+    velocity_bias1(d_ff, 0.0f),
+    velocity_bias2(d_model, 0.0f)      
 
 {
     const std::string weights_file = file_prefix_feed_forward_weights + std::to_string(layer_index) + ".bin";
@@ -26,6 +33,15 @@ FeedForward::FeedForward(int d_model, int d_ff, bool load_parameters_yes_no, int
             for (auto& row : weights2) {
                 file.read(reinterpret_cast<char*>(row.data()), row.size() * sizeof(float));
             }
+            // Similarly for loading
+            for (float &b : bias1) {
+                file.read(reinterpret_cast<char*>(&b), sizeof(float));
+            }
+            for (float &b : bias2) {
+                file.read(reinterpret_cast<char*>(&b), sizeof(float));
+            }
+
+
             file.close();
             std::cout << "FeedForward weights for layer " << layer_index << " loaded from file.\n";
             loaded = true;
@@ -52,6 +68,15 @@ FeedForward::FeedForward(int d_model, int d_ff, bool load_parameters_yes_no, int
                 val = scale2 * (static_cast<float>(std::rand()) / RAND_MAX - 0.5f) * 2.0f;
             }
         }
+
+         // Randomly initialize bias1
+        for (auto& val : bias1) {
+            val = scale1 * (static_cast<float>(std::rand()) / RAND_MAX - 0.5f) * 2.0f;
+        }
+         // Randomly initialize bias2
+        for (auto& val : bias2) {
+            val = scale2 * (static_cast<float>(std::rand()) / RAND_MAX - 0.5f) * 2.0f;
+        }                   
     }
 }
 
@@ -65,6 +90,16 @@ void FeedForward::save_weights(int layer_index) {
         for (const auto& row : weights2) {
             file.write(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
         }
+        // After writing weights1 and weights2
+        for (float b : bias1) {
+            file.write(reinterpret_cast<const char*>(&b), sizeof(float));
+        }
+        for (float b : bias2) {
+            file.write(reinterpret_cast<const char*>(&b), sizeof(float));
+        }
+
+
+
         file.close();
         std::cout << "FeedForward weights for layer " << layer_index << " initialized and saved to file.\n";
     } else {
@@ -78,19 +113,36 @@ std::vector<std::vector<float>> FeedForward::forward(const std::vector<std::vect
 
     // Step 1: Linear transformation with weights1
     hidden_activations = Utils::matmul(input, weights1);
+    // Add bias1 along the columns
+    // hidden_activations shape: [batch_size x d_ff]
+    for (auto &row : hidden_activations)
+    {
+        for (int j = 0; j < (int)row.size(); j++)
+        {
+            row[j] += bias1[j];
+        }
+    }
 
     // Step 2: Apply ReLU activation
-    for (auto& row : hidden_activations) {
-        for (auto& val : row) {
+    for (auto &row : hidden_activations)
+    {
+        for (auto &val : row)
+        {
             val = Utils::leaky_relu(val);
         }
     }
 
-    // Step 3: Linear transformation with weights2
-    return Utils::matmul(hidden_activations, weights2);
+    // Step 3: Linear transformation with weights2 + bias2
+    auto out = Utils::matmul(hidden_activations, weights2);
+    for (auto &row : out)
+    {
+        for (int j = 0; j < (int)row.size(); j++)
+        {
+            row[j] += bias2[j];
+        }
+    }
+    return out;
 }
-
-
 
 std::vector<std::vector<float>> FeedForward::backward(const std::vector<std::vector<float>>& grad_output) {
     // 1) grad_hidden = grad_output * W2^T
@@ -101,6 +153,22 @@ std::vector<std::vector<float>> FeedForward::backward(const std::vector<std::vec
     for (size_t i = 0; i < grad_hidden.size(); ++i) {
         for (size_t j = 0; j < grad_hidden[i].size(); ++j) {
             grad_hidden[i][j] *= Utils::leaky_relu_derivative(hidden_activations[i][j]);
+        }
+    }
+    // gradient for bias2
+    //   Each bias2[j] = sum of grad_output[:, j] across the batch dimension
+    for (size_t i = 0; i < grad_output.size(); ++i)
+    { // over batch
+        for (size_t j = 0; j < grad_output[i].size(); ++j)
+        { // over output dim
+            grad_bias2[j] += grad_output[i][j];
+        }
+    }
+    // gradient for bias1
+    //   Each bias1[j] = sum of grad_hidden[:, j] across the batch dimension
+    for (size_t i = 0; i < grad_hidden.size(); ++i) {
+        for (size_t j = 0; j < grad_hidden[i].size(); ++j) {
+            grad_bias1[j] += grad_hidden[i][j];
         }
     }
 
@@ -122,6 +190,8 @@ std::vector<std::vector<float>> FeedForward::backward(const std::vector<std::vec
     // ------------------------------------------------
     auto weights1_transposed = Utils::transpose(weights1);
     auto grad_input = Utils::matmul(grad_hidden, weights1_transposed);
+
+
 
     return grad_input;
 }

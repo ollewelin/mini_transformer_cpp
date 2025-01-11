@@ -198,25 +198,3 @@ Which build tool do we rely on?
 When will the user manual be published?
 Is multi-factor authentication required?
 Could you explain how these classes interact?
-What is the approximate release timeline?
-How do I generate a secure key pair?
-Can you please email me the final invoice?
-Where can I find local volunteer opportunities?
-Why am I receiving so many spam emails?
-Who can I contact for press inquiries?
-Which folder contains the environment config files?
-When did you last run the integration tests?
-Is it beneficial to switch to a microservices architecture?
-Could you illustrate the deployment process?
-What is the safe temperature range for storage?
-How do I check for memory leaks in this program?
-Can you forward the meeting invitation?
-Where do I report a bug in the system?
-Why are my push notifications not working?
-Who is the lead developer on this team?
-Which UI library is compatible with React?
-When does your subscription expire?
-Is there a light mode and a dark mode option?
-Could you detail the differences between the two plans?
-
-

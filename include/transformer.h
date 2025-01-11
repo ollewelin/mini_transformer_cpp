@@ -43,6 +43,13 @@ public:
     void save_feed_forward_weights();
     void save_LayerNormalization_weights();
 
+    float read_attention_weight(
+        int layer_index,
+        const std::string& matrix_type,
+        int row,
+        int col
+    ) const;
+
 private:
     Embedding embedding;
     PositionalEncoding pos_encoding;

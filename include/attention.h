@@ -27,6 +27,8 @@ public:
 
     // Save weights to binary files
     void save_weights(int layer_index);
+    float read_weight(const std::string& matrix_type, int row, int col) const;
+
 
 #ifdef TEST_ATTENTION
 public:

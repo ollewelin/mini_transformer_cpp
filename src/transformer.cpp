@@ -143,7 +143,6 @@ std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vec
         auto grad_attn = attention_layers[i].backward(grad_ffn);
         attention_layers[i].update_weights();
         grad_ffn = add_matrices(grad_ffn, residual_connections.back());
-        
         // --- You would similarly call attention_layers[i].update_weights(), 
         //     if you implement a similar update method for the attention layer.
     }

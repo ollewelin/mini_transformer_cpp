@@ -18,7 +18,7 @@ using namespace std;
 #include <algorithm> // For Fisher-Yates shuffle
 #include <random>    // For random number generation
 #include <chrono>    // For seeding random number generator
-
+#include <algorithm> // std::min
 
 
 
@@ -102,6 +102,20 @@ std::vector<int> pad_sequence(const std::vector<int>& sequence, int max_len) {
     return padded_sequence;
 }
 
+std::vector<int> truncate_tokens_max_len(const std::vector<int>& sequence, int max_len) 
+{
+    // 1) Truncate if necessary
+    // Use std::min to avoid out-of-range if sequence is shorter
+    std::vector<int> truncated(sequence.begin(), 
+                               sequence.begin() + std::min<size_t>(sequence.size(), max_len));
+
+    // 2) If truncated.size() < max_len, pad with zeros
+    if (truncated.size() < static_cast<size_t>(max_len)) {
+        truncated.resize(max_len, 0); // 0 = [PAD]
+    }
+
+    return truncated;
+}
 // Function to create padding mask
 std::vector<int> create_padding_mask(const std::vector<int>& sequence, int max_len) {
     std::vector<int> mask(max_len, 0);
@@ -580,8 +594,8 @@ int main() {
                       //         d_model = 128, d_ff = 256 or d_ff = 512.
                       //       This ratio balances the model's capacity with computational efficiency.
     int num_layers = 6;
-    int max_len = length; //64  Maximum sequence length (number of tokens in a single input)
-
+   // int max_len = length; //64  Maximum sequence length (number of tokens in a single input)
+    int max_len = 25;
 #ifdef TEST_UTILS
 
     cout << "Test utils functions here: " << endl;
@@ -764,16 +778,15 @@ int main() {
             std::cout << "momentum: " << GLOBAL_momentum << std::endl;            
         }
         std::cout << "Epoch " << epoch << " / " << epochs << "\n";
-
         // Shuffle dataset
         fisher_yates_shuffle(dataset_2D, labels);
         float epoch_loss = 0.0f; // Accumulate loss for the epoch
-
         for (size_t i = 0; i < dataset_2D.size(); ++i)
         {
             // Prepare input and padding mask
-            auto padded_input = pad_sequence(dataset_2D[i], max_len);
-            auto padding_mask = create_padding_mask(dataset_2D[i], max_len);
+           // auto padded_input = pad_sequence(dataset_2D[i], max_len);
+            auto trunc_sequence = truncate_tokens_max_len(dataset_2D[i], max_len);
+            auto padding_mask = create_padding_mask(trunc_sequence, max_len);
 #ifdef DEBUG_PRINT_MAIN            
             std::cout << "Padding Input:" << std::endl;
             for (int input : padded_input) {
@@ -787,18 +800,14 @@ int main() {
             }
             std::cout << std::endl;
 #endif
-
             // Forward pass through transformer
-            auto output_trans = transformer.forward(padded_input, padding_mask);
-
+            auto output_trans = transformer.forward(trunc_sequence, padding_mask);
 #ifdef DEBUG_PRINT_MAIN 
             std::cout << "Transformer Output Before Pooling:" << std::endl;
             print_float_vector_2D(output_trans);
 #endif
-
             // Reduce transformer output (e.g., by mean pooling)
             std::vector<float> pooled_output = mean_pooling(output_trans);
-
 #ifdef DEBUG_PRINT_MAIN             
             std::cout << "Pooled Output (Input to Classification Layer):" << std::endl;
             print_float_vector_1D(pooled_output);
@@ -806,15 +815,10 @@ int main() {
 
             // Apply final classification layer
             std::vector<float> logits = linear_layer(pooled_output, final_weights, final_bias);
-           
             std::vector<float> probabilities = softmax(logits);
-
             // Backpropagation starts here
             // Step 1: Compute gradient of loss with respect to logits
             std::vector<float> grad_logits = cross_entropy_loss_gradient(probabilities, labels[i]);
-
-
-
             // Step 2: Compute gradients for final weights and bias
             std::vector<std::vector<float>> grad_final_weights(final_weights.size(),
                                                                std::vector<float>(final_weights[0].size(), 0.0f));

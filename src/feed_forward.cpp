@@ -157,6 +157,7 @@ std::vector<std::vector<float>> FeedForward::backward(const std::vector<std::vec
     }
     // gradient for bias2
     //   Each bias2[j] = sum of grad_output[:, j] across the batch dimension
+    std::fill(grad_bias2.begin(), grad_bias2.end(), 0.0f);
     for (size_t i = 0; i < grad_output.size(); ++i)
     { // over batch
         for (size_t j = 0; j < grad_output[i].size(); ++j)
@@ -166,6 +167,7 @@ std::vector<std::vector<float>> FeedForward::backward(const std::vector<std::vec
     }
     // gradient for bias1
     //   Each bias1[j] = sum of grad_hidden[:, j] across the batch dimension
+    std::fill(grad_bias1.begin(), grad_bias1.end(), 0.0f);
     for (size_t i = 0; i < grad_hidden.size(); ++i) {
         for (size_t j = 0; j < grad_hidden[i].size(); ++j) {
             grad_bias1[j] += grad_hidden[i][j];
@@ -222,14 +224,14 @@ void FeedForward::update_weights() {
     for (size_t i = 0; i < bias2.size(); ++i) {
         velocity_bias2[i] = GLOBAL_momentum * velocity_bias2[i] 
             + GLOBAL_learning_rate * grad_bias2[i];
-        bias2[i] -= velocity_bias2[i];
+      //  bias2[i] -= velocity_bias2[i];
     }
     
     // Update bias1
     for (size_t i = 0; i < bias1.size(); ++i) {
         velocity_bias1[i] = GLOBAL_momentum * velocity_bias1[i] 
             + GLOBAL_learning_rate * grad_bias1[i];
-        bias1[i] -= velocity_bias1[i];
+      //  bias1[i] -= velocity_bias1[i];
     }
 }
 

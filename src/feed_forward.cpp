@@ -208,6 +208,7 @@ void FeedForward::update_weights() {
             weights2[i][j] -= velocity_weights2[i][j];
         }
     }
+    
     // Update weights1
     for (size_t i = 0; i < weights1.size(); ++i) {
         for (size_t j = 0; j < weights1[i].size(); ++j) {
@@ -216,10 +217,21 @@ void FeedForward::update_weights() {
             weights1[i][j] -= velocity_weights1[i][j];
         }
     }
-    // Optionally, you could clear grad_weights1 and grad_weights2
-    // if you don’t need them again until the next backward pass:
-    // grad_weights1.clear();
-    // grad_weights2.clear();
+    
+    // Update bias2
+    for (size_t i = 0; i < bias2.size(); ++i) {
+        velocity_bias2[i] = GLOBAL_momentum * velocity_bias2[i] 
+            + GLOBAL_learning_rate * grad_bias2[i];
+        bias2[i] -= velocity_bias2[i];
+    }
+    
+    // Update bias1
+    for (size_t i = 0; i < bias1.size(); ++i) {
+        velocity_bias1[i] = GLOBAL_momentum * velocity_bias1[i] 
+            + GLOBAL_learning_rate * grad_bias1[i];
+        bias1[i] -= velocity_bias1[i];
+    }
 }
+
 
 

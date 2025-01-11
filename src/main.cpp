@@ -3,6 +3,7 @@
 #include "dataset.h"
 #include <vector>
 #include "utils.h"
+#include <unordered_map>
 using namespace std;
 
 #include "config.h"
@@ -367,6 +368,45 @@ int main() {
     cout << "The goal is to build and understand the Transformer algorithm from scratch using pure C++." << endl;
     cout << "========================================================================================================" << endl;
     cout << endl;
+
+
+    // ----------------------------------------------------------------
+    // Step 1: Load vocabulary from file
+    // ----------------------------------------------------------------
+    std::unordered_map<std::string, int> vocab;
+    std::string vocab_file = "vocab.txt";
+    if (!load_vocab_from_file(vocab_file, vocab)) {
+        std::cerr << "Failed to load vocab from: " << vocab_file << std::endl;
+        return -1;
+    }
+
+    // Optional: Print out some vocab entries
+    // for (auto &kv : vocab) {
+    //     std::cout << kv.first << " -> " << kv.second << std::endl;
+    // }
+
+    // ----------------------------------------------------------------
+    // Step 2: Prepare dataset from question.txt and answer.txt
+    // ----------------------------------------------------------------
+    std::vector<std::vector<int>> dataset_2D;
+    std::vector<int> labels;
+    std::string question_file = "question.txt";
+    std::string answer_file   = "answer.txt";
+    if (!prepare_dataset_from_files(question_file, answer_file, dataset_2D, labels, vocab)) {
+        std::cerr << "Failed to load dataset from: " << question_file 
+                  << " and " << answer_file << std::endl;
+        return -1;
+    }
+
+
+    // ----------------------------------------------------------------
+    // Then continue your existing logic...
+    //   - create the Transformer
+    //   - define final layer weights
+    //   - run training loop, etc.
+    // ----------------------------------------------------------------
+
+
     std::cout << "Do you want to load an existing model parameter with embedding matrix from a file? (Y/N, y/n): ";
     std::string choice;
     std::cin >> choice;
@@ -484,7 +524,23 @@ int main() {
     cout << "=====================================================================\n";
 
 #else
-
+    int length = 0;
+    // Display tokenized sentences and their labels
+    std::cout << "Tokenized Dataset:\n";
+    for (size_t i = 0; i < dataset_2D.size(); ++i) {
+        std::cout << (labels[i] == 0 ? "Question: " : "Answer: ");
+        int token_cnt = 0;
+        for (int token : dataset_2D[i]) {
+            std::cout << token << " ";
+            token_cnt++;
+            if(length < token_cnt)
+            {
+                length = token_cnt;
+            }
+        }
+        std::cout << "\n";
+    }
+    cout << "token_cnt length: " << length << endl;
     // Define parameters
     int vocab_size = 5000;
     int d_model = 128; // The "resolution" of the positional encoding and embedding space. 
@@ -524,7 +580,7 @@ int main() {
                       //         d_model = 128, d_ff = 256 or d_ff = 512.
                       //       This ratio balances the model's capacity with computational efficiency.
     int num_layers = 6;
-    int max_len = 8; //64  Maximum sequence length (number of tokens in a single input)
+    int max_len = length; //64  Maximum sequence length (number of tokens in a single input)
 
 #ifdef TEST_UTILS
 
@@ -615,7 +671,7 @@ int main() {
         cout << endl;
     }
 #endif
-
+/*
     // Define a simple vocabulary
     std::unordered_map<std::string, int> vocab = {
         {"[PAD]", 0}, {"[UNK]", 1}, {"what", 2}, {"time", 3}, {"is", 4}, {"it", 5}, {"now", 6},
@@ -639,17 +695,8 @@ int main() {
     // Prepare the dataset
     std::vector<std::vector<int>> dataset_2D;
     std::vector<int> labels;
-    prepare_dataset(dataset_2D, labels, vocab);
-
-    // Display tokenized sentences and their labels
-    std::cout << "Tokenized Dataset:\n";
-    for (size_t i = 0; i < dataset_2D.size(); ++i) {
-        std::cout << (labels[i] == 0 ? "Question: " : "Answer: ");
-        for (int token : dataset_2D[i]) {
-            std::cout << token << " ";
-        }
-        std::cout << "\n";
-    }
+  //  prepare_dataset(dataset_2D, labels, vocab);
+*/
 
     // ================== Set up the transformer ==================
     vocab_size = vocab.size(); // Dynamically set to the actual vocabulary size
@@ -694,7 +741,7 @@ int main() {
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
 
     // ============== Training loop ===================
-    int epochs = 2000;
+    int epochs = 200;
     // Initialize velocity for weights and bias
     std::vector<std::vector<float>> velocity_weights(final_weights.size(),
                                                      std::vector<float>(final_weights[0].size(), 0.0f));

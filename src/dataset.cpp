@@ -1,7 +1,11 @@
 #include "dataset.h"
 #include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <cctype>
+#include <string>
 
-// Tokenize a sentence using the vocabulary
+// This function tokenizes a sentence using the vocabulary
 std::vector<int> tokenize(const std::string &sentence, const std::unordered_map<std::string, int> &vocab) {
     std::istringstream iss(sentence);
     std::string word;
@@ -12,53 +16,103 @@ std::vector<int> tokenize(const std::string &sentence, const std::unordered_map<
         std::transform(word.begin(), word.end(), word.begin(), ::tolower);
 
         // Remove punctuation from the word
-        word.erase(std::remove_if(word.begin(), word.end(), ispunct), word.end());
+        word.erase(std::remove_if(word.begin(), word.end(), ::ispunct), word.end());
 
-        // Add token or unknown token (0)
-        tokens.push_back(vocab.count(word) ? vocab.at(word) : 1);//{"[PAD]", 0}, {"[UNK]", 1}
+        // If word not found, use [UNK] token. We assume [UNK] is ID=1 in the vocab.
+        if (vocab.count(word)) {
+            tokens.push_back(vocab.at(word));
+        } else {
+            tokens.push_back(vocab.at("[UNK]")); 
+        }
     }
 
     return tokens;
 }
 
-// Prepare the dataset
-void prepare_dataset(std::vector<std::vector<int>> &data, std::vector<int> &labels, const std::unordered_map<std::string, int> &vocab) {
-    // Questions
-    std::vector<std::string> questions = {
-        "What time is it now?",
-        "How are you doing today?",
-        "Can you help me with this?",
-        "Where is the nearest bus stop?",
-        "Why is the sky blue?",
-        "Who wrote this book?",
-        "Which movie do you recommend?",
-        "When will the meeting start?",
-        "Is it going to rain today?",
-        "Could you explain that again?"
-    };
-
-    // Answers
-    std::vector<std::string> answers = {
-        "It is three o'clock.",
-        "I am doing well, thank you.",
-        "Yes, I can help you with that.",
-        "The nearest bus stop is down the street.",
-        "The sky appears blue because of light scattering.",
-        "This book was written by Jane Austen.",
-        "I recommend watching 'Inception.'",
-        "The meeting will start in ten minutes.",
-        "Yes, it is going to rain later today.",
-        "Sure, I'll explain it again."
-    };
-
-    // Labels: 0 for Questions, 1 for Answers
-    for (const auto &q : questions) {
-        data.push_back(tokenize(q, vocab));
-        labels.push_back(0); // Question
+// ------------- NEW: load vocab from file -------------
+// Assumes each line contains exactly one token, e.g.
+// [PAD]
+// [UNK]
+// what
+// time
+// is
+bool load_vocab_from_file(const std::string &vocab_file, std::unordered_map<std::string, int> &vocab)
+{
+    std::ifstream ifs(vocab_file);
+    if (!ifs.is_open()) {
+        std::cerr << "Error: Could not open vocab file: " << vocab_file << std::endl;
+        return false;
     }
 
-    for (const auto &a : answers) {
-        data.push_back(tokenize(a, vocab));
-        labels.push_back(1); // Answer
+    vocab.clear();  // Clear existing vocab
+    std::string token;
+    int index = 0;
+
+    while (std::getline(ifs, token)) {
+        // Remove extra whitespace
+        token.erase(std::remove_if(token.begin(), token.end(), ::isspace), token.end());
+        // Skip empty lines
+        if (token.empty()) continue;
+        
+        // Insert into vocab
+        vocab[token] = index;
+        index++;
     }
+
+    ifs.close();
+
+    if (vocab.empty()) {
+        std::cerr << "Warning: The vocabulary file is empty or not loaded properly.\n";
+        return false;
+    }
+
+    std::cout << "Loaded vocabulary of size: " << vocab.size() << std::endl;
+    return true;
+}
+
+// ------------- NEW: prepare dataset from question and answer files -------------
+bool prepare_dataset_from_files(const std::string &question_file,
+                                const std::string &answer_file,
+                                std::vector<std::vector<int>> &data,
+                                std::vector<int> &labels,
+                                const std::unordered_map<std::string, int> &vocab)
+{
+    std::ifstream ifs_q(question_file);
+    std::ifstream ifs_a(answer_file);
+
+    if (!ifs_q.is_open()) {
+        std::cerr << "Error: Could not open question file: " << question_file << std::endl;
+        return false;
+    }
+    if (!ifs_a.is_open()) {
+        std::cerr << "Error: Could not open answer file: " << answer_file << std::endl;
+        return false;
+    }
+
+    data.clear();
+    labels.clear();
+
+    // Read questions, label=0
+    std::string line;
+    while (std::getline(ifs_q, line)) {
+        if (line.empty()) continue;  // skip empty lines
+        std::vector<int> question_tokens = tokenize(line, vocab);
+        data.push_back(question_tokens);
+        labels.push_back(0); // 0 for Question
+    }
+
+    // Read answers, label=1
+    while (std::getline(ifs_a, line)) {
+        if (line.empty()) continue; // skip empty lines
+        std::vector<int> answer_tokens = tokenize(line, vocab);
+        data.push_back(answer_tokens);
+        labels.push_back(1); // 1 for Answer
+    }
+
+    ifs_q.close();
+    ifs_a.close();
+
+    // Quick check
+    std::cout << "Loaded " << data.size() << " examples total (Questions + Answers)." << std::endl;
+    return true;
 }

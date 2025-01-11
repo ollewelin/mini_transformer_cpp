@@ -1,28 +1,33 @@
 #ifndef ATTENTION_H
 #define ATTENTION_H
+
 #include <vector>
 #include "config.h"
 #include <iostream> // For std::cout and std::endl
 #include <fstream>  // For file I/O
 
-
-
-    
 class MultiHeadAttention {
 public:
     MultiHeadAttention(int d_model, int num_heads, bool load_parameters_yes_no, int layer_index);
+
     std::vector<std::vector<float>> forward(
         const std::vector<std::vector<float>>& query,
         const std::vector<std::vector<float>>& key,
         const std::vector<std::vector<float>>& value,
         const std::vector<int>& padding_mask
-        );
-    
-    // Save weights to binary files
-    void save_weights(int layer_index);
+    );
+
+    // Backward pass to compute gradients
     std::vector<std::vector<float>> backward(
         const std::vector<std::vector<float>>& grad_output // Gradient from the next layer
     );
+
+    // New method to update weights AFTER backward pass
+    void update_weights();
+
+    // Save weights to binary files
+    void save_weights(int layer_index);
+
 #ifdef TEST_ATTENTION
 public:
 #else
@@ -33,33 +38,55 @@ public:
     #endif
 #endif
 
+    // (Optionally public for testing or debugging)
     std::vector<std::vector<float>> scaled_dot_product_attention(
         const std::vector<std::vector<float>>& query,
         const std::vector<std::vector<float>>& key,
         const std::vector<std::vector<float>>& value,
-        const std::vector<int>& padding_mask // Padding when input tokens lengh is less then max_len
-);
+        const std::vector<int>& padding_mask
+    );
 
 #ifdef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION
     std::vector<std::vector<float>> scaled_dot_product_attention_with_printout(
         const std::vector<std::vector<float>>& query,
         const std::vector<std::vector<float>>& key,
-        const std::vector<std::vector<float>>& value);
+        const std::vector<std::vector<float>>& value
+    );
 #endif
+
+    // ——————————————
+    // Learned Weights
+    // ——————————————
     std::vector<std::vector<float>> weights_q; // Query weights
     std::vector<std::vector<float>> weights_k; // Key weights
     std::vector<std::vector<float>> weights_v; // Value weights
 
 private:
-    // Static constant for the base file name prefix
+    // Static constants for storing/loading
     static const std::string file_prefix_attention_weights_q_layer_;
     static const std::string file_prefix_attention_weights_k_layer_;
     static const std::string file_prefix_attention_weights_v_layer_;
 
-    std::vector<std::vector<float>> query_cache; // Cache for query input during forward pass
-    std::vector<std::vector<float>> key_cache;   // Cache for key input (if needed)
-    std::vector<std::vector<float>> value_cache; // Cache for value input (if needed)
+    // ——————————————
+    // Momentum buffers
+    // ——————————————
+    std::vector<std::vector<float>> velocity_q; 
+    std::vector<std::vector<float>> velocity_k;
+    std::vector<std::vector<float>> velocity_v;
 
+    // ——————————————
+    // Gradients
+    // ——————————————
+    std::vector<std::vector<float>> grad_weights_q;
+    std::vector<std::vector<float>> grad_weights_k;
+    std::vector<std::vector<float>> grad_weights_v;
+
+    // ——————————————————
+    // Caches for backprop
+    // ——————————————————
+    std::vector<std::vector<float>> query_cache; 
+    std::vector<std::vector<float>> key_cache;   
+    std::vector<std::vector<float>> value_cache; 
 };
 
 #endif // ATTENTION_H

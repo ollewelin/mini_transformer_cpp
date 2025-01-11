@@ -50,6 +50,17 @@ private:
     std::vector<std::vector<float>> grad_weights2;    
     static const std::string file_prefix_feed_forward_weights;
 
+    // Add for bias
+    std::vector<float> bias1; 
+    std::vector<float> bias2;
+
+    // Gradients for bias
+    std::vector<float> grad_bias1;
+    std::vector<float> grad_bias2;
+
+    // Momentum for bias
+    std::vector<float> velocity_bias1;
+    std::vector<float> velocity_bias2;
    
 
 };

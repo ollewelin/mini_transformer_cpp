@@ -1,4 +1,5 @@
 #include "transformer.h"
+#include <stdexcept> // for std::out_of_range
 using namespace std;
 std::vector<std::vector<float>> Transformer::add_matrices(const std::vector<std::vector<float>> &a, const std::vector<std::vector<float>> &b) {
     if (a.size() != b.size() || a[0].size() != b[0].size()) {
@@ -95,35 +96,23 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
     return output;
 }
 
-/*
-std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vector<float>>& grad_pooled) {
-    auto grad_ff = feed_forward_layers.back().backward(grad_pooled);
 
-    for (int i = attention_layers.size() - 1; i >= 0; --i) {
-        // Backpropagate through feedforward layers
-        auto grad_ffn = feed_forward_layers[i].backward(grad_ff);
-
-        // Backpropagate through residual connections and layer normalization
-     //   grad_ffn = layer_norms[i * 2 + 1].backward(grad_ffn, feedforward_outputs[i]);
-
-        // Backpropagate through attention layers
-        auto grad_attn = attention_layers[i].backward(grad_ffn);
-
-        // Backpropagate through residual connections and layer normalization
-     //   grad_ff = layer_norms[i * 2].backward(grad_attn, attention_outputs[i]);
+float Transformer::read_attention_weight(
+    int layer_index,
+    const std::string& matrix_type,
+    int row,
+    int col
+) const
+{
+    // Safety check
+    if (layer_index < 0 || layer_index >= static_cast<int>(attention_layers.size())) {
+        throw std::out_of_range("Invalid layer_index in read_attention_weight()");
     }
 
-    // Backpropagate through positional encoding
-    auto grad_pos = pos_encoding.backward(grad_ff);
-
-    // Backpropagate through embedding
-    // Assuming `input_tokens` is the tokenized input to the Transformer (from the forward pass)
-    float learning_rate = 0.01;
-    embedding.apply_gradients(input_tokens, grad_pos, learning_rate);
-    
-    return grad_pos; // Return gradient for external validation (optional)
+    // Forward the call to the appropriate MultiHeadAttention in our vector
+    return attention_layers[layer_index].read_weight(matrix_type, row, col);
 }
-*/
+
 
 
 std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vector<float>>& grad_pooled) {
@@ -140,7 +129,7 @@ std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vec
         // Backprop attention
         residual_connections.clear();
         residual_connections.push_back(grad_ff);
-        auto grad_attn = attention_layers[i].backward(grad_ffn);
+      //  grad_ffn = attention_layers[i].backward(grad_ffn);
         attention_layers[i].update_weights();
         grad_ffn = add_matrices(grad_ffn, residual_connections.back());
         // --- You would similarly call attention_layers[i].update_weights(), 

@@ -767,6 +767,7 @@ int main() {
     std::cout << "learning_rate: " << GLOBAL_learning_rate << std::endl;
     std::cout << "momentum: " << GLOBAL_momentum << std::endl;
     // Training loop with gradient computation
+ //   const int save_after_epc = 10;
     for (int epoch = 1; epoch <= epochs; ++epoch)
     {
         if(epoch == warm_up_epc_cnt)
@@ -870,15 +871,27 @@ int main() {
             print_float_vector_2D(grad_pooled);
 #endif
 
-            // Backpropagate gradient through the Transformer
 
-            
+           // Pick a layer, matrix, row, col to observe
+           int layer_idx = 0;
+           std::string which_matrix = "Q"; // or "K"/"V"
+           int row = 2;
+           int col = 3;
+
+           float weight_before = transformer.read_attention_weight(layer_idx, which_matrix, row, col);
+            // Backpropagate gradient through the Transformer 
            transformer.backward(grad_pooled);
 
-            //print_out_probabilities(probabilities, padded_input);// Print probabilities for debugging
-            // Compute loss and accumulate
-            float loss = cross_entropy_loss(probabilities, labels[i]);
-            epoch_loss += loss;
+           float weight_after = transformer.read_attention_weight(layer_idx, which_matrix, row, col);
+
+     //      std::cout << "Weight before: " << weight_before
+     //                << ", after: " << weight_after << std::endl;
+
+           // print_out_probabilities(probabilities, padded_input);// Print probabilities for debugging
+           //  Compute loss and accumulate
+           float loss = cross_entropy_loss(probabilities, labels[i]);
+           epoch_loss += loss;
+
         }
 
         // Print average loss for the epoch

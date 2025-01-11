@@ -114,33 +114,6 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_par
     }
 #endif
 }
-/*
-// Backward pass for MultiHeadAttention
-std::vector<std::vector<float>> MultiHeadAttention::backward(
-    const std::vector<std::vector<float>>& grad_output
-) {
-    // Transpose the weights
-    auto weights_q_transposed = Utils::transpose(weights_q);
-    auto weights_k_transposed = Utils::transpose(weights_k);
-    auto weights_v_transposed = Utils::transpose(weights_v);
-
-    // Backpropagate through the attention output
-    auto grad_attention_output = grad_output;
-
-    // Compute gradients for value weights
-    auto grad_value = Utils::matmul(grad_attention_output, weights_v_transposed);
-
-    // Backpropagate through scaled dot-product attention
-    auto grad_query_key = Utils::matmul(grad_attention_output, weights_q_transposed);
-
-    // Compute gradients for key and query
-    auto grad_query = Utils::matmul(grad_query_key, weights_k_transposed);
-    auto grad_key = Utils::matmul(Utils::transpose(grad_query_key), query_cache);
-
-    // Return gradient for the input query
-    return grad_query;
-}
-*/
 
 std::vector<std::vector<float>> MultiHeadAttention::backward(
     const std::vector<std::vector<float>>& grad_output
@@ -253,6 +226,34 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
 
     return attention_output;
 }
+#include <stdexcept> // for std::out_of_range
+
+float MultiHeadAttention::read_weight(const std::string& matrix_type, int row, int col) const
+{
+    // Decide which matrix to read from
+    const std::vector<std::vector<float>>* target_matrix = nullptr;
+
+    if (matrix_type == "Q") {
+        target_matrix = &weights_q;
+    } else if (matrix_type == "K") {
+        target_matrix = &weights_k;
+    } else if (matrix_type == "V") {
+        target_matrix = &weights_v;
+    } else {
+        throw std::invalid_argument("Invalid matrix_type. Must be one of {\"Q\", \"K\", \"V\"}.");
+    }
+
+    // Safety check for out-of-range
+    if (row < 0 || row >= static_cast<int>(target_matrix->size())) {
+        throw std::out_of_range("Row index out of range in read_weight()");
+    }
+    if (col < 0 || col >= static_cast<int>((*target_matrix)[row].size())) {
+        throw std::out_of_range("Column index out of range in read_weight()");
+    }
+
+    return (*target_matrix)[row][col];
+}
+
 
 void MultiHeadAttention::update_weights()
 {

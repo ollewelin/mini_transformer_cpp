@@ -115,59 +115,118 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_par
 #endif
 }
 
+
 std::vector<std::vector<float>> MultiHeadAttention::backward(
     const std::vector<std::vector<float>>& grad_output
 ) {
-    // 1) Suppose grad_output is the gradient coming from the next layer 
-    //    w.r.t the output of the attention.
-    auto grad_attention_output = grad_output;
+    //=============================================================
+    // 0) Setup / Initialize local grad buffers
+    //=============================================================
+    // grad_output has the same shape as the 'attention_output' from forward
+    // We'll need partial derivatives for Q, K, V, etc.
+    std::vector<std::vector<float>> dV;      // same shape as V
+    std::vector<std::vector<float>> dQ;      // same shape as Q
+    std::vector<std::vector<float>> dK;      // same shape as K
 
-    // 2) For the Value path:
-    //
-    //    - grad_w.r.t. weights_v = value_cache^T * grad_attention_output
-    //    - grad_w.r.t. input V   = grad_attention_output * weights_v^T
-    auto weights_v_transposed = Utils::transpose(weights_v);
-    grad_weights_v = Utils::matmul(Utils::transpose(value_cache), grad_attention_output);
-    auto grad_value = Utils::matmul(grad_attention_output, weights_v_transposed);
+    // You may want to initialize them to zeros. E.g.:
+    // dV = Utils::zeros_like(value_cache * weights_v); etc.
 
-    // 3) For the Query path:
-    //
-    //    - We might have a chunk of grad_attention_output that flows to Q
-    //      through your scaled_dot_product_attention. 
-    //      For simplicity, assume it is "grad_Q" here:
-    auto weights_q_transposed = Utils::transpose(weights_q);
-    // If you have a direct partial derivative w.r.t. Q from the attention, 
-    // it might be something like:
-    auto grad_Q = Utils::matmul(grad_attention_output, weights_q_transposed);
+    // Also, if you stored the final attention probs from forward:
+    // "attention_probs_cache" shape = (batch_size x seq_len, seq_len)
+    // We'll call it A for short in the comments.
+    auto A = attention_probs_cache; // just to reference it easily
+
+    //=============================================================
+    // 1) Backprop through final matmul: output = A * V
+    //    => dA = grad_output * V^T
+    //    => dV = A^T * grad_output
+    //=============================================================
+    // dV = A^T matmul grad_output
+    dV = Utils::matmul(Utils::transpose(A), grad_output);
+
+    // partial derivative w.r.t. attention_probs A
+    // dA = grad_output matmul V^T
+    auto dA = Utils::matmul(grad_output, Utils::transpose(value_cache /* i.e. V */));
+    // Actually, you used V = (value_cache x weights_v).
+    // So you likely need 'Utils::transpose(V)' from your forward step. 
+    // If you didn't store V explicitly, you can compute it again:
+    auto V = Utils::matmul(value_cache, weights_v);
+    // then dA = grad_output matmul transpose(V)
+    dA = Utils::matmul(grad_output, Utils::transpose(V));
+
+    //=============================================================
+    // 2) Backprop through softmax: A = softmax(scores)
+    //    => dScores = dA * derivative_of_softmax(scores)
+    //=============================================================
+    // You typically do an element-wise formula:
+    // dScores[i] = A[i] * (dA[i] - sum_j(A[j]*dA[j]))
+    // Implementation depends on your Utils::softmax derivative.
+
+    std::vector<std::vector<float>> dScores = Utils::softmax_backward(dA, A);
+
+    // (Pseudo-code: you'll implement the derivative in your Utils or directly here.)
+
+    //=============================================================
+    // 3) Backprop through 'scores = (QK^T)/sqrt(dk)' + mask
+    //    => dQ = dScores matmul K  * (1/sqrt(dk))
+    //    => dK = dScores^T matmul Q * (1/sqrt(dk))
+    //=============================================================
+    float scale_factor = 1.0f / std::sqrt(static_cast<float>(key_cache[0].size()));
+
+    // Recompute Q = query_cache x weights_q
+    auto Q = Utils::matmul(query_cache, weights_q);
+    // Recompute K = key_cache   x weights_k
+    auto K_ = Utils::matmul(key_cache,   weights_k);
+
+    // dQ
+    // dimension check: dScores shape == QK^T shape. Typically (batch_size x seq_len1, seq_len2)
+    // So dQ = dScores matmul K_ * scale_factor
+    dQ = Utils::matmul(dScores, K_);
+    Utils::scale_inplace(dQ, scale_factor);
+
+    // dK
+    // dK = dScores^T matmul Q * scale_factor
+    auto dK_tmp = Utils::matmul(Utils::transpose(dScores), Q);
+    Utils::scale_inplace(dK_tmp, scale_factor);
+
+    //=============================================================
+    // 4) Backprop to the linear transformations:
+    //    Q = query_cache x weights_q
+    //    => dWeights_q = (query_cache^T) matmul dQ
+    //    => dQuery     = dQ matmul (weights_q^T)
+    // Similarly for K, V
+    //=============================================================
+    // (a) grad_weights_v
+    // V = value_cache x weights_v
+    // dWeights_v = (value_cache^T) x dV
+    grad_weights_v = Utils::matmul(Utils::transpose(value_cache), dV);
+
+    // If you need grad w.r.t. the original value input:
+    // grad_value = dV matmul transpose(weights_v)
+    // We'll return grad_value or store it if you want to backprop further.
+    auto grad_value = Utils::matmul(dV, Utils::transpose(weights_v));
+
+    // (b) grad_weights_q
+    grad_weights_q = Utils::matmul(Utils::transpose(query_cache), dQ);
+
+    // (c) grad_weights_k
+    grad_weights_k = Utils::matmul(Utils::transpose(key_cache), dK_tmp);
+
+    // (d) If you need grad w.r.t. the original query/key:
+    // grad_query  = dQ      matmul transpose(weights_q)
+    // grad_key    = dK_tmp  matmul transpose(weights_k)
+    auto grad_query = Utils::matmul(dQ,     Utils::transpose(weights_q));
+    auto grad_key   = Utils::matmul(dK_tmp, Utils::transpose(weights_k));
     
-    // Then gradient w.r.t. weights_q:
-    grad_weights_q = Utils::matmul(Utils::transpose(query_cache), grad_attention_output);
-
-    // 4) For the Key path:
-    //
-    //    - Similarly, you'd have "grad_K"
-    auto weights_k_transposed = Utils::transpose(weights_k);
-    auto grad_K = Utils::matmul(grad_attention_output, weights_k_transposed);
-
-    // Then gradient w.r.t. weights_k:
-    grad_weights_k = Utils::matmul(Utils::transpose(key_cache), grad_attention_output);
-
-    // Compute gradients for key and query
-    auto grad_query = Utils::matmul(grad_Q, weights_k_transposed);
-    auto grad_key = Utils::matmul(Utils::transpose(grad_Q), query_cache);
-
-    // 5) Optionally, combine or do final partial derivatives from 
-    //    scaled_dot_product_attention. Often, you’d do the real 
-    //    attention backward pass:
-    //
-    //    auto grad_query = ... ; 
-    //    auto grad_key   = ... ; 
-    //    auto grad_value = ... ; 
-    //
-    // For a minimal example, let's return grad_query (the gradient 
-    // w.r.t. the original "query" input).
-    return grad_query; 
+    //=============================================================
+    // 5) Combine or return whichever gradient is relevant
+    //=============================================================
+    // Your signature returns std::vector<std::vector<float>>. 
+    // Often we return grad_w.r.t "query" (or all three). 
+    // But let's say you return grad_query for demonstration:
+    return grad_query;
 }
+
 
 
 
@@ -258,8 +317,8 @@ float MultiHeadAttention::read_weight(const std::string& matrix_type, int row, i
 void MultiHeadAttention::update_weights()
 {
     // Example: read from some config or define here
-    float learning_rate = GLOBAL_learning_rate; 
-    float momentum      = GLOBAL_momentum;  
+    float learning_rate = GLOBAL_ATTENTION_learning_rate; 
+    float momentum      = GLOBAL_ATTENTION_momentum;  
 
     // Update weights_q
     for (size_t i = 0; i < weights_q.size(); i++) {
@@ -295,44 +354,39 @@ void MultiHeadAttention::update_weights()
     }
 }
 
-
 #ifndef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION  
 std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention(
-    const std::vector<std::vector<float>> &query,
-    const std::vector<std::vector<float>> &key,
-    const std::vector<std::vector<float>> &value,
+    const std::vector<std::vector<float>>& query,
+    const std::vector<std::vector<float>>& key,
+    const std::vector<std::vector<float>>& value,
     const std::vector<int>& padding_mask)
 {
     // 1. Compute QK^T
     auto scores = Utils::matmul(query, Utils::transpose(key));
-
     // 2. Scale scores by sqrt(d_k)
     float scale_factor = std::sqrt(static_cast<float>(key[0].size()));
-    for (size_t i = 0; i < scores.size(); ++i)
-    {
-        for (size_t j = 0; j < scores[0].size(); ++j)
-        {
+    for (size_t i = 0; i < scores.size(); ++i) {
+        for (size_t j = 0; j < scores[0].size(); ++j) {
             scores[i][j] /= scale_factor;
         }
     }
-
     // 3. Apply masking to prevent attending to future tokens
     // Apply masking to prevent attending to future tokens and padding
     for (size_t i = 0; i < scores.size(); ++i) {
         for (size_t j = 0; j < scores[i].size(); ++j) {
-            if (j > i || padding_mask[j] == 0) { // Future tokens or padding tokens
+            if (j > i || padding_mask[j] == 0) {
                 scores[i][j] = -std::numeric_limits<float>::infinity();
             }
         }
     }
-
     // 4. Apply softmax to scores
-    for (size_t i = 0; i < scores.size(); ++i)
-    {
+    // Softmax
+    for (size_t i = 0; i < scores.size(); ++i) {
         scores[i] = Utils::softmax(scores[i]);
     }
-
     // 5. Multiply scores with V
+    // Store final attention distribution for backprop
+    attention_probs_cache = scores;
     auto output = Utils::matmul(scores, value);
     return output;
 }

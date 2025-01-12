@@ -129,7 +129,7 @@ std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vec
         // Backprop attention
         residual_connections.clear();
         residual_connections.push_back(grad_ff);
-      //  grad_ffn = attention_layers[i].backward(grad_ffn);
+        grad_ffn = attention_layers[i].backward(grad_ffn);
         attention_layers[i].update_weights();
         grad_ffn = add_matrices(grad_ffn, residual_connections.back());
         // --- You would similarly call attention_layers[i].update_weights(), 

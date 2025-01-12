@@ -170,6 +170,53 @@ std::vector<float> Utils::softmax(const std::vector<float> &input)
 
     return result;
 }
+/**
+ * @brief Computes gradient w.r.t. the input of a softmax function
+ *        (row-wise softmax) for a 2D matrix.
+ *
+ * @param grad_output   Gradient from the next layer, same shape as softmax_out.
+ *                      For each row i, grad_output[i] is dL/d(softmax_out[i]).
+ * @param softmax_out   The output of softmax(input) row-by-row.
+ *                      For each row i, softmax_out[i] sums to 1.
+ * @return              Gradient w.r.t. the original 2D input of softmax, same shape.
+ */
+
+namespace Utils {
+std::vector<std::vector<float>> softmax_backward(
+    const std::vector<std::vector<float>>& grad_output,
+    const std::vector<std::vector<float>>& softmax_out
+) {
+    // Prepare dInput with the same shape as grad_output.
+    std::vector<std::vector<float>> dInput(grad_output.size());
+    for (size_t i = 0; i < grad_output.size(); ++i) {
+        dInput[i].resize(grad_output[i].size(), 0.0f);
+    }
+
+    // Process each row independently
+    for (size_t row = 0; row < grad_output.size(); ++row) {
+        // 1) Compute dot = sum_j(grad_output[row][j] * softmax_out[row][j])
+        float dot = 0.0f;
+        for (size_t col = 0; col < grad_output[row].size(); ++col) {
+            dot += grad_output[row][col] * softmax_out[row][col];
+        }
+
+        // 2) Compute dInput[row][col] = softmax_out[row][col] * (grad_output[row][col] - dot)
+        for (size_t col = 0; col < grad_output[row].size(); ++col) {
+            dInput[row][col] = softmax_out[row][col] * (grad_output[row][col] - dot);
+        }
+    }
+
+    return dInput;
+}
+}
+void Utils::scale_inplace(std::vector<std::vector<float>>& matrix, float scale_factor)
+{
+    for (auto& row : matrix) {
+        for (auto& value : row) {
+            value *= scale_factor;
+        }
+    }
+}
 
 void Utils::print_matrix(const std::vector<std::vector<float>>& matrix)
 {

@@ -760,30 +760,27 @@ int main() {
     std::vector<std::vector<float>> velocity_weights(final_weights.size(),
                                                      std::vector<float>(final_weights[0].size(), 0.0f));
     std::vector<float> velocity_bias(final_bias.size(), 0.0f);
-    const float warm_up_factor = 1.0;
-    const int warm_up_epc_cnt = 100;
-    float GLOBAL_learning_rate = GLOBAL_CONST_learning_rate * warm_up_factor;
-    float GLOBAL_momentum = GLOBAL_CONST_momentum * warm_up_factor;
+
+    GLOBAL_learning_rate = 0.0001;
+    GLOBAL_momentum = 0.1;
+    GLOBAL_ATTENTION_learning_rate = GLOBAL_learning_rate;
+    GLOBAL_ATTENTION_momentum = GLOBAL_momentum;   
     std::cout << "learning_rate: " << GLOBAL_learning_rate << std::endl;
     std::cout << "momentum: " << GLOBAL_momentum << std::endl;
     // Training loop with gradient computation
- //   const int save_after_epc = 10;
+    float best_avg_loss = 10000.0;
     for (int epoch = 1; epoch <= epochs; ++epoch)
     {
-        if(epoch == warm_up_epc_cnt)
-        {
-            GLOBAL_learning_rate = GLOBAL_CONST_learning_rate;
-            GLOBAL_momentum = GLOBAL_CONST_momentum;
-            std::cout << "Set normal learning rate after warm up " << std::endl;
-            std::cout << "learning_rate: " << GLOBAL_learning_rate << std::endl;
-            std::cout << "momentum: " << GLOBAL_momentum << std::endl;            
-        }
+
+
         std::cout << "Epoch " << epoch << " / " << epochs << "\n";
         // Shuffle dataset
         fisher_yates_shuffle(dataset_2D, labels);
         float epoch_loss = 0.0f; // Accumulate loss for the epoch
+
         for (size_t i = 0; i < dataset_2D.size(); ++i)
         {
+
             // Prepare input and padding mask
            // auto padded_input = pad_sequence(dataset_2D[i], max_len);
             auto trunc_sequence = truncate_tokens_max_len(dataset_2D[i], max_len);
@@ -871,29 +868,27 @@ int main() {
             print_float_vector_2D(grad_pooled);
 #endif
 
-
-           // Pick a layer, matrix, row, col to observe
-           int layer_idx = 0;
-           std::string which_matrix = "Q"; // or "K"/"V"
-           int row = 2;
-           int col = 3;
-
-           float weight_before = transformer.read_attention_weight(layer_idx, which_matrix, row, col);
             // Backpropagate gradient through the Transformer 
            transformer.backward(grad_pooled);
-
-           float weight_after = transformer.read_attention_weight(layer_idx, which_matrix, row, col);
-
-     //      std::cout << "Weight before: " << weight_before
-     //                << ", after: " << weight_after << std::endl;
 
            // print_out_probabilities(probabilities, padded_input);// Print probabilities for debugging
            //  Compute loss and accumulate
            float loss = cross_entropy_loss(probabilities, labels[i]);
            epoch_loss += loss;
 
-        }
 
+        }
+        float avg_loss_this_epoch = epoch_loss / dataset_2D.size();
+        if(best_avg_loss > avg_loss_this_epoch)
+        {
+            best_avg_loss = avg_loss_this_epoch;
+            save_final_layer_weights(final_weights, final_bias);
+            transformer.save_embedding_matrix();
+            transformer.save_attention_weights();
+            transformer.save_feed_forward_weights();
+            transformer.save_LayerNormalization_weights();
+        }
+           
         // Print average loss for the epoch
         std::cout << "Average Loss for Epoch " << epoch << ": " << (epoch_loss / dataset_2D.size()) << "\n";
     }

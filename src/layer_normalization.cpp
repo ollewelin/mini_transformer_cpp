@@ -63,7 +63,7 @@ std::vector<std::vector<float>> LayerNormalization::backward(
     std::vector<std::vector<float>> grad_input(rows, std::vector<float>(cols));
 
     for (size_t i = 0; i < rows; ++i) {
-        float mean = mean_cache[i];
+  //      float mean = mean_cache[i];
         float stddev = stddev_cache[i];
 
         for (size_t j = 0; j < cols; ++j) {

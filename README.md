@@ -398,7 +398,59 @@ Each row in the output matrix corresponds to the weighted sum of value vectors f
 =====================================================================
 
 ```
+## Example log when training 
 
+```
 
+Average Loss for Epoch 258: 0.354806
+Epoch 259 / 1000
+** correct_prob : 0.855
+Average Loss for Epoch 259: 0.352544
+Epoch 260 / 1000
+** correct_prob : 0.855
+Average Loss for Epoch 260: 0.356734
+Epoch 261 / 1000
+** correct_prob : 0.855
+Average Loss for Epoch 261: 0.356308
+Epoch 262 / 1000
+** correct_prob : 0.855
+Average Loss for Epoch 262: 0.350175
+Epoch 263 / 1000
+** correct_prob : 0.8625
+Final layer weights saved to final_layer_weight.bin.
+Embedding matrix saved to file: embedding_matrix.bin
+Attention weights for layer 0 saved to files.
+Attention weights for layer 1 saved to files.
+Attention weights for layer 2 saved to files.
+Attention weights for layer 3 saved to files.
+Attention weights for layer 4 saved to files.
+Attention weights for layer 5 saved to files.
+FeedForward weights for layer 0 initialized and saved to file.
+FeedForward weights for layer 1 initialized and saved to file.
+FeedForward weights for layer 2 initialized and saved to file.
+FeedForward weights for layer 3 initialized and saved to file.
+FeedForward weights for layer 4 initialized and saved to file.
+FeedForward weights for layer 5 initialized and saved to file.
+Average Loss for Epoch 263: 0.330319
+Epoch 264 / 1000
+** correct_prob : 0.8775
+Average Loss for Epoch 264: 0.350765
+Epoch 265 / 1000
+** correct_prob : 0.86
+Average Loss for Epoch 265: 0.369768
+Epoch 266 / 1000
+** correct_prob : 0.865
+Average Loss for Epoch 266: 0.362699
+Epoch 267 / 1000
+** correct_prob : 0.8775
+Average Loss for Epoch 267: 0.342921
+Epoch 268 / 1000
+** correct_prob : 0.8875
+Average Loss for Epoch 268: 0.335516
+Epoch 269 / 1000
+** correct_prob : 0.8725
+Average Loss for Epoch 269: 0.344732
+
+```
 
 

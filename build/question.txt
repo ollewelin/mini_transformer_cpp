@@ -1,0 +1,200 @@
+What time is it now?
+How are you doing today?
+Can you help me with this task?
+Where is the nearest bus stop?
+Why is the sky blue?
+Who wrote this article?
+Which movie do you recommend?
+When will the meeting start?
+Is it going to rain tomorrow?
+Could you explain that again?
+What is the capital of France?
+How can I improve my coding skills?
+Can you show me an example of that function?
+Where can I find more resources?
+Why does the sun rise in the east?
+Who discovered penicillin?
+Which programming language should I learn first?
+When does the store open?
+Is it safe to travel abroad now?
+Could you please rephrase the question?
+What is your opinion on the current situation?
+How do I prepare for a job interview?
+Can you confirm the details of the reservation?
+Where is the best place to eat around here?
+Why do we need to use pointers in C?
+Who can help me with this project?
+Which library do I need to install?
+When is the next bus arriving?
+Is Python better than Java?
+Could you simplify that equation?
+What is the meaning of life?
+How often do you exercise?
+Can you assist me with my homework?
+Where should I park my car?
+Why are there so many stars in the sky?
+Who won the World Cup last year?
+Which podcast do you recommend for tech news?
+When is the deadline for the submission?
+Is this the correct way to perform the task?
+Could you please speak more slowly?
+What is the tallest building in the world?
+How do I reset my password?
+Can you explain the concept of inheritance in OOP?
+Where should we hold the conference?
+Why is the data not loading properly?
+Who can authorize this purchase?
+Which framework do you find easiest to use?
+When are you planning to take a vacation?
+Is that a valid argument?
+Could you detail the steps to reproduce the bug?
+What is the maximum speed limit on this road?
+How do I create a new Git branch?
+Can you proofread this document for me?
+Where did you learn about machine learning?
+Why is my code throwing a segmentation fault?
+Who can approve my leave request?
+Which website do you use for flight bookings?
+When will the renovations be finished?
+Is classical music beneficial for concentration?
+Could you change the font size, please?
+What is the best approach to solve this problem?
+How did you get started in programming?
+Can you translate this sentence for me?
+Where do I submit my expense report?
+Why does my phone battery drain so quickly?
+Who is the main contact person for support?
+Which solution do you think is more efficient?
+When should we schedule the next meeting?
+Is coffee or tea better for productivity?
+Could you share the presentation slides?
+What is the largest mammal on Earth?
+How do I optimize this SQL query?
+Can you help me fix these compile errors?
+Where can I recycle these items?
+Why do magnets have poles?
+Who is your favorite historical figure?
+Which brand of laptop would you recommend?
+When is the best time to visit Japan?
+Is it permissible to bring outside food?
+Could you illustrate the concept with an example?
+What is your strategy for investing?
+How do I change the system settings?
+Can you forward me the email chain?
+Where do they host the annual conference?
+Why is that method deprecated?
+Who is responsible for signing the contract?
+Which phone model has the best camera?
+When did the museum first open?
+Is all the data backed up properly?
+Could you clarify your last statement?
+What is the best path to advance my career?
+How does one become a better public speaker?
+Can you verify the total cost?
+Where can I learn more about quantum computing?
+Why are certain features disabled by default?
+Who is going to cover the travel expenses?
+Which test cases have we not covered yet?
+When is the project expected to launch?
+Is knowledge of algorithms essential for this role?
+Could you check the logs for errors?
+What is your favorite programming language?
+How do I install this application on Linux?
+Can you finalize the report by tomorrow?
+Where did you see the missing files last?
+Why do some people prefer remote work?
+Who can mentor new team members?
+Which color scheme do you like best?
+When will you release the next version?
+Is this a bug or intended behavior?
+Could you guide me through the configuration?
+What is the difference between TCP and UDP?
+How do I add a new user to the system?
+Can you describe your workflow for code reviews?
+Where do I find the official documentation?
+Why is the package delayed in transit?
+Who is authorized to access the server room?
+Which repository contains the latest source code?
+When is the software update scheduled?
+Is there a discount available for students?
+Could you summarize the main points?
+What is the recommended daily water intake?
+How do I convert this file to PDF?
+Can you create a backup of the database?
+Where can I see the system logs?
+Why do some species migrate long distances?
+Who was the first person to climb Mount Everest?
+Which antivirus software do you prefer?
+When do we expect to hear back from the client?
+Is there a recommended workflow for merging branches?
+Could you demonstrate how to use this tool?
+What is the largest planet in our solar system?
+How do I compress a folder into a zip file?
+Can you schedule a follow-up call for next week?
+Where is the best spot to watch the sunset?
+Why does memory usage spike during startup?
+Who should we invite to the brainstorming session?
+Which approach leads to better performance?
+When do you think we can wrap up this project?
+Is it worth refactoring the entire codebase?
+Could you confirm the shipping address?
+What is the typical charge time for this device?
+How do I connect to the VPN?
+Can you outline the tasks for this sprint?
+Where can I read about your company's values?
+Why do we need to sign a Non-Disclosure Agreement?
+Who can resolve a conflict in Git?
+Which flavor of Linux do you recommend for servers?
+When can we expect the final design mock-ups?
+Is that the correct usage of the API?
+Could you re-express the problem in simpler terms?
+What is the best free resource to learn data science?
+How can I delete my account permanently?
+Can you forward me the team contact list?
+Where is the new office located?
+Why is the documentation incomplete?
+Who is the main user of this feature?
+Which analytics tool do we use?
+When does the warranty expire?
+Is your system compatible with macOS?
+Could you remind me of our security policy?
+What is the best way to approach debugging?
+How do I rename a Git commit?
+Can you open a support ticket for me?
+Where can I download the required SDK?
+Why is the process taking so long?
+Who should I address in the cover letter?
+Which IDE do most developers here use?
+When do you plan on releasing the patch?
+Is it raining at your location now?
+Could you help me design the user interface?
+What is the best route to get to the station?
+How do I reduce CPU usage?
+Can you demonstrate how to run these tests?
+Where can I see the user feedback logs?
+Why are we tracking these metrics?
+Who can take ownership of the new feature?
+Which environment variable do I need to set?
+When is the next code freeze scheduled?
+Is my data safe with this configuration?
+Could you break down the cost estimates?
+What is the best practice for password storage?
+How do I update my profile information?
+Can you join the video conference in five minutes?
+Where do we store archived documents?
+Why is the code coverage still low?
+Who is going to maintain the legacy codebase?
+Which container platform are we using?
+When are we merging the prototype branch?
+Is there a tutorial for setting up Docker?
+Could you clarify the acceptance criteria?
+What is the memory footprint of this application?
+How do I gather feedback from end users?
+Can you share the official style guide?
+Where is the best place to see the fall colors?
+Why does the system reject my login credentials?
+Who can override these access permissions?
+Which build tool do we rely on?
+When will the user manual be published?
+Is multi-factor authentication required?
+Could you explain how these classes interact?

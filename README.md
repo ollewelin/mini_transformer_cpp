@@ -5,8 +5,13 @@ I have done lot's of tweeks to focus on understand this transformer algorithm in
 ### Overview and purpose:
 Transformer Test in Mini Format (C/C++) - No Use of ML Libraries. Just for my own tutorial proposal in the first hand but may enjoy other as well.
 
+## mini prompt test if Question or Answer
+
+![](mini_prompt.jpeg)
+
 ### Description of the project:
 Transformer Test in Mini Format (C/C++) - No Use of ML Libraries. This mini Transformer project is heavily guided and inspired by AI-powered assistance (Transformer LLM). The goal is to build and understand the Transformer algorithm from scratch using pure C++. Testing key components step by step...
+
 
 
 ## File structures

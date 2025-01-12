@@ -785,7 +785,7 @@ int main() {
         
 
     // ============== Training loop ===================
-    int epochs = 1000;
+    int epochs = 5000;
     // Initialize velocity for weights and bias
     std::vector<std::vector<float>> velocity_weights(final_weights.size(),
                                                      std::vector<float>(final_weights[0].size(), 0.0f));

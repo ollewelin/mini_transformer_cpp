@@ -224,14 +224,14 @@ void FeedForward::update_weights() {
     for (size_t i = 0; i < bias2.size(); ++i) {
         velocity_bias2[i] = GLOBAL_momentum * velocity_bias2[i] 
             + GLOBAL_learning_rate * grad_bias2[i];
-      //  bias2[i] -= velocity_bias2[i];
+        bias2[i] -= velocity_bias2[i];
     }
     
     // Update bias1
     for (size_t i = 0; i < bias1.size(); ++i) {
         velocity_bias1[i] = GLOBAL_momentum * velocity_bias1[i] 
             + GLOBAL_learning_rate * grad_bias1[i];
-      //  bias1[i] -= velocity_bias1[i];
+        bias1[i] -= velocity_bias1[i];
     }
 }
 

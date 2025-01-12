@@ -64,6 +64,8 @@ std::vector<std::vector<float>> mse_loss_grad(
 
 #endif // TEST_FEEDFORWARD_TRAIN
 
+
+
 // Cross-entropy loss gradient
 std::vector<float> cross_entropy_loss_gradient(const std::vector<float>& probabilities, int label) {
     std::vector<float> gradient(probabilities.size(), 0.0f);
@@ -258,6 +260,43 @@ void print_out_probabilities(std::vector<float> probabilities, std::vector<int> 
     print_float_vector_1D(probabilities);
 }
 
+void run_prompt_mode(Transformer& transformer, int max_len, const unordered_map<string, int>& vocab) {
+    string input;
+    while (true) {
+        cout << "\nEnter a string (or type 'exit' to quit): ";
+        getline(cin, input);
+
+        if (input == "exit") {
+            cout << "Exiting mini prompt mode.\n";
+            break;
+        }
+
+        // Tokenize input
+        vector<int> tokens = tokenize(input, vocab);
+
+        // Truncate and create padding mask
+        auto trunc_sequence = truncate_tokens_max_len(tokens, max_len);
+        auto padding_mask = create_padding_mask(trunc_sequence, max_len);
+
+        cout << "Truncated tokens (max length " << max_len << "): ";
+        for (const auto& token : trunc_sequence) {
+            cout << token << " ";
+        }
+        cout << "\n";
+
+        // Run forward pass
+        vector<vector<float>> probabilities = transformer.forward(trunc_sequence, padding_mask);
+
+        // Print probabilities
+        cout << "Category probabilities:\n";
+        cout << "Answer: " << probabilities[0][0] << "\n";
+        cout << "Question: " << probabilities[0][1] << "\n";
+
+        // Predict category
+        string prediction = (probabilities[0][0] > probabilities[0][1]) ? "Answer" : "Question";
+        cout << "Predicted category: " << prediction << "\n";
+    }
+}
 
 int main() {
     
@@ -685,32 +724,6 @@ int main() {
         cout << endl;
     }
 #endif
-/*
-    // Define a simple vocabulary
-    std::unordered_map<std::string, int> vocab = {
-        {"[PAD]", 0}, {"[UNK]", 1}, {"what", 2}, {"time", 3}, {"is", 4}, {"it", 5}, {"now", 6},
-        {"how", 7}, {"are", 8}, {"you", 9}, {"doing", 10}, {"today", 11},
-        {"can", 12}, {"help", 13}, {"me", 14}, {"with", 15}, {"this", 16},
-        {"where", 17}, {"the", 18}, {"nearest", 19}, {"bus", 20}, {"stop", 21},
-        {"why", 22}, {"sky", 23}, {"blue", 24}, {"who", 25}, {"wrote", 26},
-        {"book", 27}, {"which", 28}, {"movie", 29}, {"do", 30}, {"recommend", 31},
-        {"when", 32}, {"will", 33}, {"meeting", 34}, {"start", 35}, {"going", 36},
-        {"to", 37}, {"rain", 38}, {"could", 39}, {"explain", 40}, {"that", 41},
-        {"again", 42}, {"three", 43}, {"oclock", 44}, {"am", 45}, {"well", 46},
-        {"thank", 47}, {"yes", 48}, {"i", 49}, {"light", 50}, {"scattering", 51},
-        {"jane", 52}, {"austen", 53}, {"inception", 54}, {"ten", 55},
-        {"minutes", 56}, {"sure", 57}, {"later", 58}
-    };
-    if (!Utils::check_vocabs(vocab)) {
-        std::cerr << "Vocabulary validation failed.\n";
-        return 1; // Exit with error
-    }
-    std::cout << "Vocabulary validation succeeded.\n";
-    // Prepare the dataset
-    std::vector<std::vector<int>> dataset_2D;
-    std::vector<int> labels;
-  //  prepare_dataset(dataset_2D, labels, vocab);
-*/
 
     // ================== Set up the transformer ==================
     vocab_size = vocab.size(); // Dynamically set to the actual vocabulary size
@@ -754,8 +767,19 @@ int main() {
     // Create transformer
     Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
 
+    cout << "Do you want to start mini prompt mode? (Y/N): ";
+    string response;
+    cin >> response;
+    cin.ignore(); // Ignore trailing newline character from cin
+
+    if (response == "Y" || response == "y" || response == "Yes" || response == "yes" || response == "YES") {
+        run_prompt_mode(transformer, max_len, vocab);
+    } else {
+        cout << "Continuing with training loop...\n";
+        
+
     // ============== Training loop ===================
-    int epochs = 200;
+    int epochs = 100;
     // Initialize velocity for weights and bias
     std::vector<std::vector<float>> velocity_weights(final_weights.size(),
                                                      std::vector<float>(final_weights[0].size(), 0.0f));
@@ -763,8 +787,8 @@ int main() {
 
     GLOBAL_learning_rate = 0.00001;
     GLOBAL_momentum = 0.9;
-    GLOBAL_ATTENTION_learning_rate = GLOBAL_learning_rate;
-    GLOBAL_ATTENTION_momentum = GLOBAL_momentum;   
+    GLOBAL_ATTENTION_learning_rate = GLOBAL_learning_rate *0.1;
+    GLOBAL_ATTENTION_momentum = GLOBAL_momentum*0.5;   
     std::cout << "learning_rate: " << GLOBAL_learning_rate << std::endl;
     std::cout << "momentum: " << GLOBAL_momentum << std::endl;
     // Training loop with gradient computation
@@ -777,7 +801,8 @@ int main() {
         // Shuffle dataset
         fisher_yates_shuffle(dataset_2D, labels);
         float epoch_loss = 0.0f; // Accumulate loss for the epoch
-
+        int correct_prob_cnt = 0;
+        int data_set_cnt = 0;
         for (size_t i = 0; i < dataset_2D.size(); ++i)
         {
 
@@ -814,6 +839,25 @@ int main() {
             // Apply final classification layer
             std::vector<float> logits = linear_layer(pooled_output, final_weights, final_bias);
             std::vector<float> probabilities = softmax(logits);
+         //   cout << "Size of probabilities: " << probabilities.size() << endl;
+            int idx=0;
+            int predicted_idx = 0;
+            float predict_max = 0.0;
+            for(auto val : probabilities)
+            {
+                if(predict_max < val)
+                {
+                    predict_max = val;
+                    predicted_idx = idx; 
+                }
+           //     cout << "probabilities[ " << idx << "] : "<< val << endl;
+                idx++;
+            }
+           // cout << " labels[" << i << "] : " << labels[i] << " predicted_idx : " << predicted_idx << endl;
+            if(predicted_idx == labels[i])
+            {
+                correct_prob_cnt++;
+            }
             // Backpropagation starts here
             // Step 1: Compute gradient of loss with respect to logits
             std::vector<float> grad_logits = cross_entropy_loss_gradient(probabilities, labels[i]);
@@ -876,8 +920,10 @@ int main() {
            float loss = cross_entropy_loss(probabilities, labels[i]);
            epoch_loss += loss;
 
-
+          data_set_cnt++;
         }
+        float correct_prob = (float)correct_prob_cnt/(float)data_set_cnt;
+        cout << "** correct_prob : " << correct_prob << endl;
         float avg_loss_this_epoch = epoch_loss / dataset_2D.size();
         if(best_avg_loss > avg_loss_this_epoch)
         {
@@ -894,6 +940,8 @@ int main() {
     }
     //========================== End training loop ===================
 
+    }
+
     // Save final layer weights (optional)
     save_final_layer_weights(final_weights, final_bias);
     transformer.save_embedding_matrix();
@@ -901,7 +949,7 @@ int main() {
     transformer.save_feed_forward_weights();    
     transformer.save_LayerNormalization_weights();
 
-    cout << "debug 1" << endl;
+    
 #endif
 
     return 0;

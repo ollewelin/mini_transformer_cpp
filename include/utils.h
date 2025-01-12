@@ -17,7 +17,13 @@ namespace Utils {
     
     // Apply softmax to a vector
     std::vector<float> softmax(const std::vector<float>& input);
-    
+
+std::vector<std::vector<float>> softmax_backward(
+    const std::vector<std::vector<float>>& grad_output,
+    const std::vector<std::vector<float>>& softmax_out
+);
+
+    void scale_inplace(std::vector<std::vector<float>>& matrix, float scale_factor);
     // Print a matrix
     void print_matrix(const std::vector<std::vector<float>>& matrix);
     

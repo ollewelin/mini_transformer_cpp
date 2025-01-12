@@ -89,6 +89,7 @@ private:
     std::vector<std::vector<float>> query_cache; 
     std::vector<std::vector<float>> key_cache;   
     std::vector<std::vector<float>> value_cache; 
+    std::vector<std::vector<float>> attention_probs_cache; // Post-softmax attention distribution
 };
 
 #endif // ATTENTION_H

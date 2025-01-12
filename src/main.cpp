@@ -260,7 +260,7 @@ void print_out_probabilities(std::vector<float> probabilities, std::vector<int> 
     print_float_vector_1D(probabilities);
 }
 
-void run_prompt_mode(Transformer& transformer, int max_len, const unordered_map<string, int>& vocab) {
+void run_prompt_mode(Transformer& transformer, int max_len, const unordered_map<string, int>& vocab, const std::vector<std::vector<float>>& weights, const std::vector<float>& bias) {
     string input;
     while (true) {
         cout << "\nEnter a string (or type 'exit' to quit): ";
@@ -284,19 +284,26 @@ void run_prompt_mode(Transformer& transformer, int max_len, const unordered_map<
         }
         cout << "\n";
 
-        // Run forward pass
-        vector<vector<float>> probabilities = transformer.forward(trunc_sequence, padding_mask);
+        // Run forward pass through transformer
+        vector<vector<float>> output = transformer.forward(trunc_sequence, padding_mask);
+        // Reduce transformer output (e.g., by mean pooling)
+        std::vector<float> pooled_output = mean_pooling(output);
+        // Apply final classification layer
+        vector<float> logits = linear_layer(pooled_output, weights, bias);
+        vector<float> probabilities = softmax(logits);
 
         // Print probabilities
         cout << "Category probabilities:\n";
-        cout << "Answer: " << probabilities[0][0] << "\n";
-        cout << "Question: " << probabilities[0][1] << "\n";
+        
+        cout << "Question: " << probabilities[0] << "\n";
+        cout << "Answer: " << probabilities[1] << "\n";
 
         // Predict category
-        string prediction = (probabilities[0][0] > probabilities[0][1]) ? "Answer" : "Question";
+        string prediction = (probabilities[0] > probabilities[1]) ? "Question" : "Answer";
         cout << "Predicted category: " << prediction << "\n";
     }
 }
+
 
 int main() {
     
@@ -596,7 +603,7 @@ int main() {
     cout << "token_cnt length: " << length << endl;
     // Define parameters
     int vocab_size = 5000;
-    int d_model = 128; // The "resolution" of the positional encoding and embedding space. 
+    int d_model = 25; // The "resolution" of the positional encoding and embedding space. 
                     // Think of it like a meter stick with 128 evenly spaced lines: 
                     // this determines how finely the meaning of a token can be represented
                     // across multiple dimensions.
@@ -620,8 +627,8 @@ int main() {
                     // However, higher d_model also increases computational complexity and 
                     // the risk of overfitting for small datasets, so a balance is needed.
 
-    int num_heads = 1;// 8
-    int d_ff = 256;   // d_ff: Dimensionality of the hidden layer in the feed-forward network.
+    int num_heads = 4;// 8
+    int d_ff = 100;   // d_ff: Dimensionality of the hidden layer in the feed-forward network.
                       //       Each feed-forward network in the transformer consists of two linear layers:
                       //       - The first layer expands the input dimensionality (d_model) to a larger hidden size (d_ff).
                       //       - The second layer projects the hidden layer back down to the original dimensionality (d_model).
@@ -634,7 +641,7 @@ int main() {
                       //       This ratio balances the model's capacity with computational efficiency.
     int num_layers = 6;
    // int max_len = length; //64  Maximum sequence length (number of tokens in a single input)
-    int max_len = 25;
+    int max_len = 15;
 #ifdef TEST_UTILS
 
     cout << "Test utils functions here: " << endl;
@@ -729,8 +736,7 @@ int main() {
     vocab_size = vocab.size(); // Dynamically set to the actual vocabulary size
     cout << "vocab_size = " << vocab_size << endl;
 
-    d_model = 25;
-    d_ff = 100;//24
+
 
     // Initialize final layer weights and bias
     int num_categories = 2; // Number of output categories (Question/Answer)
@@ -773,7 +779,7 @@ int main() {
     cin.ignore(); // Ignore trailing newline character from cin
 
     if (response == "Y" || response == "y" || response == "Yes" || response == "yes" || response == "YES") {
-        run_prompt_mode(transformer, max_len, vocab);
+        run_prompt_mode(transformer, max_len, vocab, final_weights, final_bias);
     } else {
         cout << "Continuing with training loop...\n";
         

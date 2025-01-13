@@ -13,7 +13,7 @@ How can I improve my coding skills?
 Can you show me an example of that function?
 Where can I find more resources?
 Why does the sun rise in the east?
-Who discovered penicillin?
+I ask what fruit you want?
 Which programming language should I learn first?
 When does the store open?
 Is it safe to travel abroad now?
@@ -42,7 +42,7 @@ What is the tallest building in the world?
 How do I reset my password?
 Can you explain the concept of inheritance in OOP?
 Where should we hold the conference?
-Why is the data not loading properly?
+Now my question, is this realy true?
 Who can authorize this purchase?
 Which framework do you find easiest to use?
 When are you planning to take a vacation?
@@ -62,7 +62,7 @@ What is the best approach to solve this problem?
 How did you get started in programming?
 Can you translate this sentence for me?
 Where do I submit my expense report?
-Why does my phone battery drain so quickly?
+And why does my phone battery drain so quickly?
 Who is the main contact person for support?
 Which solution do you think is more efficient?
 When should we schedule the next meeting?
@@ -70,12 +70,12 @@ Is coffee or tea better for productivity?
 Could you share the presentation slides?
 What is the largest mammal on Earth?
 How do I optimize this SQL query?
-Can you help me fix these compile errors?
+Hello can you help me fix these compile errors?
 Where can I recycle these items?
 Why do magnets have poles?
 Who is your favorite historical figure?
-Which brand of laptop would you recommend?
-When is the best time to visit Japan?
+Mr Smith which brand of laptop would you recommend?
+My frend when is the best time to visit Japan?
 Is it permissible to bring outside food?
 Could you illustrate the concept with an example?
 What is your strategy for investing?
@@ -93,7 +93,7 @@ How does one become a better public speaker?
 Can you verify the total cost?
 Where can I learn more about quantum computing?
 Why are certain features disabled by default?
-Who is going to cover the travel expenses?
+Do you know who is going to cover the travel expenses?
 Which test cases have we not covered yet?
 When is the project expected to launch?
 Is knowledge of algorithms essential for this role?
@@ -109,13 +109,13 @@ When will you release the next version?
 Is this a bug or intended behavior?
 Could you guide me through the configuration?
 What is the difference between TCP and UDP?
-How do I add a new user to the system?
+Do they know how do I add a new user to the system?
 Can you describe your workflow for code reviews?
 Where do I find the official documentation?
 Why is the package delayed in transit?
 Who is authorized to access the server room?
 Which repository contains the latest source code?
-When is the software update scheduled?
+Can thay update the scheduled?
 Is there a discount available for students?
 Could you summarize the main points?
 What is the recommended daily water intake?
@@ -198,3 +198,111 @@ Which build tool do we rely on?
 When will the user manual be published?
 Is multi-factor authentication required?
 Could you explain how these classes interact?
+What is your favorite book and why?
+How do I troubleshoot network connectivity issues?
+Can you recommend a good podcast for learning history?
+Where is the nearest electric vehicle charging station?
+Why do we dream at night?
+Who was the first scientist to propose the theory of evolution?
+Which tools are best for time management?
+When is the best time to plant a garden?
+Is it possible to travel faster than the speed of light?
+Could you share your thoughts on climate change?
+What is the difference between RAM and ROM?
+How do I protect my personal information online?
+Where can I find tutorials for 3D modeling?
+Why does water expand when it freezes?
+Who is considered the father of modern computing?
+Which mobile app do you use for budgeting?
+When will humans land on Mars?
+Is there life beyond Earth?
+Could you explain the principles of blockchain technology?
+What is the most effective way to learn a new language?
+How do I configure my home Wi-Fi network securely?
+Where can I buy organic produce nearby?
+Why is biodiversity important for ecosystems?
+Who is the most influential artist of the 20th century?
+Which keyboard shortcut saves the most time?
+When do birds typically migrate?
+Is meditation effective for stress relief?
+How do I fix common errors in Python?
+Can you suggest good books on philosophy?
+Why does the moon appear larger near the horizon?
+Where can I find open-source software for photo editing?
+What are the benefits of learning a musical instrument?
+Who invented the first programmable computer?
+Which habits contribute to better mental health?
+When is the best time to observe the Northern Lights?
+Is there a way to reduce energy consumption at home?
+Could you summarize the key points of Einstein's theory of relativity?
+How do I clean and maintain my DSLR camera?
+Where is the best place to stargaze near me?
+Why do humans have different blood types?
+Who is responsible for setting global internet standards?
+Which cloud storage service do you recommend?
+When does the next solar eclipse occur?
+Is there a beginner’s guide for using Linux?
+Can you provide tips for writing a compelling resume?
+What is the simplest way to calculate compound interest?
+How do I start a podcast from scratch?
+Where can I find high-quality free courses online?
+Why do some animals hibernate during winter?
+Who designed the Eiffel Tower?
+Which workout routine is most effective for beginners?
+When is the best time to visit the Grand Canyon?
+Is there an easy way to memorize historical dates?
+Could you explain how cryptocurrencies are mined?
+What is the difference between a comet and an asteroid?
+How do I upgrade the RAM in my laptop?
+Where is the best spot for birdwatching in this area?
+Why do some people have a fear of heights?
+Who wrote the first novel in history?
+Which productivity apps are worth trying?
+When will quantum computers become mainstream?
+Is it possible to recycle electronic waste efficiently?
+Could you walk me through setting up a home theater system?
+What is the origin of the Internet of Things (IoT)?
+How do I bake a perfect loaf of bread?
+Where can I find volunteer opportunities nearby?
+Why does oil float on water?
+Who are the top innovators in renewable energy today?
+Which type of tea is best for relaxation?
+When should I replace my car tires?
+Is yoga better than other forms of exercise?
+Could you explain the differences between renewable and non-renewable energy sources?
+What is the best way to start learning about astronomy?
+How do I troubleshoot my smartphone when it won’t turn on?
+Where can I find reliable news sources?
+Why do we experience seasons on Earth?
+Who developed the theory of general relativity?
+Which graphic design software is best for beginners?
+When did humans first land on the moon?
+Is it worth learning to code in 2025?
+Could you recommend a strategy for improving time management?
+What is the best way to store digital photos securely?
+How do I resolve compatibility issues with software?
+Where can I find local farmer’s markets?
+Why does my phone overheat so quickly?
+Who are the key figures in the history of AI?
+Which books are essential for understanding economics?
+When is the best time to prune fruit trees?
+Is there a way to predict volcanic eruptions?
+Could you describe the steps to create a business plan?
+What is the importance of protecting endangered species?
+How do I improve my public speaking skills?
+Where can I rent a bike in this city?
+Why do stars twinkle in the night sky?
+Who were the inventors of the light bulb?
+Which software is best for video editing?
+When will the next major technological breakthrough happen?
+Is there a shortcut to mastering chess?
+Could you provide a checklist for moving into a new house?
+What is the most fuel-efficient way to drive?
+How do I balance work and personal life effectively?
+Where is the nearest library?
+Why do some countries drive on the left side of the road?
+Who is the current Secretary-General of the United Nations?
+Which browser extensions improve productivity?
+When did the Industrial Revolution begin?
+Is there a good way to prevent procrastination?
+Could you suggest ways to celebrate a small victory?

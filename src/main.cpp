@@ -603,7 +603,7 @@ int main() {
     cout << "token_cnt length: " << length << endl;
     // Define parameters
     int vocab_size = 5000;
-    int d_model = 12; // The "resolution" of the positional encoding and embedding space. 
+    int d_model = 32; // The "resolution" of the positional encoding and embedding space. 
                     // Think of it like a meter stick with 128 evenly spaced lines: 
                     // this determines how finely the meaning of a token can be represented
                     // across multiple dimensions.
@@ -627,8 +627,8 @@ int main() {
                     // However, higher d_model also increases computational complexity and 
                     // the risk of overfitting for small datasets, so a balance is needed.
 
-    int num_heads = 2;// 8
-    int d_ff = 32;   // d_ff: Dimensionality of the hidden layer in the feed-forward network.
+    int num_heads = 1;// 8 Not yet implemented
+    int d_ff = 256;   // d_ff: Dimensionality of the hidden layer in the feed-forward network.
                       //       Each feed-forward network in the transformer consists of two linear layers:
                       //       - The first layer expands the input dimensionality (d_model) to a larger hidden size (d_ff).
                       //       - The second layer projects the hidden layer back down to the original dimensionality (d_model).

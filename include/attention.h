@@ -14,12 +14,14 @@ public:
         const std::vector<std::vector<float>>& query,
         const std::vector<std::vector<float>>& key,
         const std::vector<std::vector<float>>& value,
-        const std::vector<int>& padding_mask
+        const std::vector<int>& padding_mask,
+        int head_cnt
     );
 
     // Backward pass to compute gradients
     std::vector<std::vector<float>> backward(
-        const std::vector<std::vector<float>>& grad_output // Gradient from the next layer
+        const std::vector<std::vector<float>>& grad_output, // Gradient from the next layer
+        int head_number
     );
 
     // New method to update weights AFTER backward pass
@@ -83,6 +85,8 @@ private:
     std::vector<std::vector<float>> grad_weights_k;
     std::vector<std::vector<float>> grad_weights_v;
 
+    std::vector<std::vector<float>> grad_query_full_output;
+
     // ——————————————————
     // Caches for backprop
     // ——————————————————
@@ -90,6 +94,9 @@ private:
     std::vector<std::vector<float>> key_cache;   
     std::vector<std::vector<float>> value_cache; 
     std::vector<std::vector<float>> attention_probs_cache; // Post-softmax attention distribution
+
+
+    int num_heads;
 };
 
 #endif // ATTENTION_H

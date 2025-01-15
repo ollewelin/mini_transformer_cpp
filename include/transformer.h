@@ -21,7 +21,8 @@ class Transformer
 public:
     Transformer(int vocab_size, int d_model, int max_len, int num_heads, int d_ff, int num_layers, bool load_parameters_yes_no)
         : embedding(vocab_size, d_model, load_parameters_yes_no),
-          pos_encoding(max_len, d_model)
+          pos_encoding(max_len, d_model),
+          num_heads(num_heads)
     {
         num_layers_local = num_layers;
         for (int i = 0; i < num_layers; ++i)
@@ -70,6 +71,7 @@ private:
     // Helper functions
     std::vector<std::vector<float>> add_matrices(const std::vector<std::vector<float>> &a, const std::vector<std::vector<float>> &b);
     int num_layers_local;
+    int num_heads;
 };
 
 #endif // TRANSFORMER_H

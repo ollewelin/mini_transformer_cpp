@@ -1,9 +1,9 @@
 [PAD]
 [UNK]
 1
-10
-11
-12
+don’t
+didn’t
+wouldn’t
 2
 3
 4
@@ -12,9 +12,9 @@
 7
 8
 9
-Could
-Hello
-Mr
+could
+hello
+mr
 a
 able
 about

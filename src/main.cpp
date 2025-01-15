@@ -830,7 +830,7 @@ int main() {
             }
             else
             {
-                cout << ".";
+                cout << "." << flush; 
                 print_dot_cnt = 0;
             }
             // Prepare input and padding mask

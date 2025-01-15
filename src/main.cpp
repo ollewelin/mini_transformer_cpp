@@ -802,7 +802,7 @@ int main() {
                                                      std::vector<float>(final_weights[0].size(), 0.0f));
     std::vector<float> velocity_bias(final_bias.size(), 0.0f);
 
-    GLOBAL_learning_rate = 0.00001;
+    GLOBAL_learning_rate = 0.0001;
     GLOBAL_momentum = 0.9;
     GLOBAL_ATTENTION_learning_rate = GLOBAL_learning_rate *1.0;//0.1
     GLOBAL_ATTENTION_momentum = GLOBAL_momentum*1.0; //0.5  
@@ -810,6 +810,8 @@ int main() {
     std::cout << "momentum: " << GLOBAL_momentum << std::endl;
     // Training loop with gradient computation
     float best_avg_loss = 10000.0;
+    const int print_dot_interval = 10;
+    int print_dot_cnt = 0;
     for (int epoch = 1; epoch <= epochs; ++epoch)
     {
 
@@ -822,7 +824,15 @@ int main() {
         int data_set_cnt = 0;
         for (size_t i = 0; i < dataset_2D.size(); ++i)
         {
-
+            if(print_dot_cnt < print_dot_interval)
+            {
+                print_dot_cnt++;
+            }
+            else
+            {
+                cout << ".";
+                print_dot_cnt = 0;
+            }
             // Prepare input and padding mask
            // auto padded_input = pad_sequence(dataset_2D[i], max_len);
             auto trunc_sequence = truncate_tokens_max_len(dataset_2D[i], max_len);

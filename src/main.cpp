@@ -603,7 +603,7 @@ int main() {
     cout << "token_cnt length: " << length << endl;
     // Define parameters
     int vocab_size = 5000;
-    int d_model = 32; // The "resolution" of the positional encoding and embedding space. 
+    int d_model = 64; // The "resolution" of the positional encoding and embedding space. 
                     // Think of it like a meter stick with 128 evenly spaced lines: 
                     // this determines how finely the meaning of a token can be represented
                     // across multiple dimensions.
@@ -627,7 +627,9 @@ int main() {
                     // However, higher d_model also increases computational complexity and 
                     // the risk of overfitting for small datasets, so a balance is needed.
 
-    int num_heads = 1;// 8 Not yet implemented
+    int num_heads = 4;// Number of attention heads. The attention class split the Q,K and V vector bus into smaller attention vectors 
+                      // and then the splitted Q_split,K_split and V_split vectors combined togheter again before enter the global Q,K and V vector bus feed forward
+                      // so if num_heads = 4 and d_model = 64 each attention have only d_model/num_heads = 64/4 = 16 loacal dimentsion to calculate on
     int d_ff = 256;   // d_ff: Dimensionality of the hidden layer in the feed-forward network.
                       //       Each feed-forward network in the transformer consists of two linear layers:
                       //       - The first layer expands the input dimensionality (d_model) to a larger hidden size (d_ff).
@@ -642,7 +644,17 @@ int main() {
     int num_layers = 6;
    // int max_len = length; //64  Maximum sequence length (number of tokens in a single input)
     int max_len = 12;
+
+    std::cerr << "d_model: " << d_model << std::endl;
+    std::cerr << "num_heads: " << num_heads << std::endl;
+    int check_num_head_settings = d_model % num_heads;
+    if(check_num_head_settings != 0)
+    {
+        std::cerr << "Failed check_num_head_settings != 0: " << check_num_head_settings << std::endl;
+        return -1;
+    }
 #ifdef TEST_UTILS
+
 
     cout << "Test utils functions here: " << endl;
 
@@ -792,8 +804,8 @@ int main() {
 
     GLOBAL_learning_rate = 0.00001;
     GLOBAL_momentum = 0.9;
-    GLOBAL_ATTENTION_learning_rate = GLOBAL_learning_rate *0.1;
-    GLOBAL_ATTENTION_momentum = GLOBAL_momentum*0.5;   
+    GLOBAL_ATTENTION_learning_rate = GLOBAL_learning_rate *1.0;//0.1
+    GLOBAL_ATTENTION_momentum = GLOBAL_momentum*1.0; //0.5  
     std::cout << "learning_rate: " << GLOBAL_learning_rate << std::endl;
     std::cout << "momentum: " << GLOBAL_momentum << std::endl;
     // Training loop with gradient computation

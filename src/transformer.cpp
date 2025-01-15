@@ -60,7 +60,11 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
         residual_connections.push_back(output);
 
         // Apply MultiHeadAttention with padding mask
-        auto attention_output = attention_layers[i].forward(output, output, output, padding_mask);
+        auto attention_output = attention_layers[i].forward(output, output, output, padding_mask, 0);
+        for(int j=1;j<Transformer::num_heads;j++)
+        {
+            attention_output = attention_layers[i].forward(attention_output, attention_output, attention_output, padding_mask, j);
+        }
     //    attention_outputs.push_back(attention_output);
 
         // Mask padding in attention output
@@ -129,7 +133,12 @@ std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vec
         // Backprop attention
         residual_connections.clear();
         residual_connections.push_back(grad_ff);
-        grad_ffn = attention_layers[i].backward(grad_ffn);
+        grad_ffn = attention_layers[i].backward(grad_ffn, 0);
+        for(int j=1;j<Transformer::num_heads;j++)
+        {
+            grad_ffn = attention_layers[i].backward(grad_ffn, j);
+        }
+
         attention_layers[i].update_weights();
         grad_ffn = add_matrices(grad_ffn, residual_connections.back());
         // --- You would similarly call attention_layers[i].update_weights(), 

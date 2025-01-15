@@ -11,7 +11,8 @@ const std::string MultiHeadAttention::file_prefix_attention_weights_k_layer_ = "
 const std::string MultiHeadAttention::file_prefix_attention_weights_v_layer_ = "attention_weights_v_layer_";
 
 MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_parameters_yes_no, int layer_index)
-    : weights_q(d_model, std::vector<float>(d_model, 0.0f)),
+    : 
+      weights_q(d_model, std::vector<float>(d_model, 0.0f)),
       weights_k(d_model, std::vector<float>(d_model, 0.0f)),
       weights_v(d_model, std::vector<float>(d_model, 0.0f)),
 
@@ -25,10 +26,16 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_par
       grad_weights_k(d_model, std::vector<float>(d_model, 0.0f)),
       grad_weights_v(d_model, std::vector<float>(d_model, 0.0f)),
 
+      // grad_query_full_output
+      grad_query_full_output(d_model, std::vector<float>(d_model, 0.0f)),
+
       // Caches
       query_cache(),
       key_cache(),
-      value_cache()
+      value_cache(),
+      num_heads(num_heads)
+            
+
 {
     const std::string weights_q_file = file_prefix_attention_weights_q_layer_ + std::to_string(layer_index) + ".bin";
     const std::string weights_k_file = file_prefix_attention_weights_k_layer_ + std::to_string(layer_index) + ".bin";
@@ -115,9 +122,10 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_par
 #endif
 }
 
-
+/*
 std::vector<std::vector<float>> MultiHeadAttention::backward(
-    const std::vector<std::vector<float>>& grad_output
+    const std::vector<std::vector<float>>& grad_output,
+    int head_number
 ) {
     //=============================================================
     // 0) Setup / Initialize local grad buffers
@@ -146,7 +154,7 @@ std::vector<std::vector<float>> MultiHeadAttention::backward(
 
     // partial derivative w.r.t. attention_probs A
     // dA = grad_output matmul V^T
-    auto dA = Utils::matmul(grad_output, Utils::transpose(value_cache /* i.e. V */));
+    auto dA = Utils::matmul(grad_output, Utils::transpose(value_cache ));// i.e. V 
     // Actually, you used V = (value_cache x weights_v).
     // So you likely need 'Utils::transpose(V)' from your forward step. 
     // If you didn't store V explicitly, you can compute it again:
@@ -227,6 +235,125 @@ std::vector<std::vector<float>> MultiHeadAttention::backward(
     return grad_query;
 }
 
+*/
+
+std::vector<std::vector<float>> MultiHeadAttention::backward(
+    const std::vector<std::vector<float>>& grad_output,
+    int head_number
+) {
+   
+    //=============================================================
+    // 0) Setup / Initialize local grad buffers
+    //=============================================================
+    size_t segment_size = query_cache[0].size() / num_heads;
+
+    // Split input and cached tensors into smaller segments for this head
+    std::vector<std::vector<float>> query_local_single_head(query_cache.size(), std::vector<float>(segment_size));
+    std::vector<std::vector<float>> key_local_single_head(key_cache.size(), std::vector<float>(segment_size));
+    std::vector<std::vector<float>> value_local_single_head(value_cache.size(), std::vector<float>(segment_size));
+
+    std::vector<std::vector<float>> weights_q_local_single_head(segment_size, std::vector<float>(segment_size));
+    std::vector<std::vector<float>> weights_k_local_single_head(segment_size, std::vector<float>(segment_size));
+    std::vector<std::vector<float>> weights_v_local_single_head(segment_size, std::vector<float>(segment_size));
+
+    // Split gradients for local computations
+    std::vector<std::vector<float>> grad_output_local(grad_output.size(), std::vector<float>(segment_size));
+
+    for (size_t i = 0; i < query_cache.size(); ++i) {
+        for (size_t j = 0; j < segment_size; ++j) {
+            int index = head_number * segment_size + j;
+            query_local_single_head[i][j] = query_cache[i][index];
+            key_local_single_head[i][j] = key_cache[i][index];
+            value_local_single_head[i][j] = value_cache[i][index];
+            grad_output_local[i][j] = grad_output[i][index];
+        }
+    }
+
+    for (size_t i = 0; i < segment_size; ++i) {
+        for (size_t j = 0; j < segment_size; ++j) {
+            int index_col = head_number * segment_size + j;
+            int index_row = head_number * segment_size + i;
+            weights_q_local_single_head[i][j] = weights_q[index_row][index_col];
+            weights_k_local_single_head[i][j] = weights_k[index_row][index_col];
+            weights_v_local_single_head[i][j] = weights_v[index_row][index_col];
+        }
+    }
+
+    //=============================================================
+    // 1) Backprop through final matmul: output = A * V
+    //=============================================================
+    auto A = attention_probs_cache; // Cached attention probabilities (full size)
+
+    auto dV = Utils::matmul(Utils::transpose(A), grad_output_local);
+
+    auto V = Utils::matmul(value_local_single_head, weights_v_local_single_head);
+    auto dA = Utils::matmul(grad_output_local, Utils::transpose(V));
+
+    //=============================================================
+    // 2) Backprop through softmax
+    //=============================================================
+    std::vector<std::vector<float>> dScores = Utils::softmax_backward(dA, A);
+
+    //=============================================================
+    // 3) Backprop through scaled dot-product attention
+    //=============================================================
+    float scale_factor = 1.0f / std::sqrt(static_cast<float>(key_local_single_head[0].size()));
+
+    auto Q = Utils::matmul(query_local_single_head, weights_q_local_single_head);
+    auto K = Utils::matmul(key_local_single_head, weights_k_local_single_head);
+
+    auto dQ = Utils::matmul(dScores, K);
+    Utils::scale_inplace(dQ, scale_factor);
+
+    auto dK = Utils::matmul(Utils::transpose(dScores), Q);
+    Utils::scale_inplace(dK, scale_factor);
+
+    //=============================================================
+    // 4) Backprop through the linear transformations
+    //=============================================================
+    auto grad_weights_q_local_single_head = Utils::matmul(Utils::transpose(query_local_single_head), dQ);
+    auto grad_weights_k_local_single_head = Utils::matmul(Utils::transpose(key_local_single_head), dK);
+    auto grad_weights_v_local_single_head = Utils::matmul(Utils::transpose(value_local_single_head), dV);
+
+    auto grad_query_local_single_head = Utils::matmul(dQ, Utils::transpose(weights_q_local_single_head));
+    auto grad_key_local_single_head = Utils::matmul(dK, Utils::transpose(weights_k_local_single_head));
+    auto grad_value_local_single_head = Utils::matmul(dV, Utils::transpose(weights_v_local_single_head));
+
+    // plug in grad_weights_q_local_single_head to grad_weights_q
+    // plug in grad_weights_k_local_single_head to grad_weights_k
+    // plug in grad_weights_v_local_single_head to grad_weights_v
+
+    // plug in grad_query_local_single_head into grad_query_full_output
+    // not used auto grad_key_local_single_head
+    // not used auto grad_value_local_single_head
+
+    // Plug in `grad_weights_q_local_single_head` to `grad_weights_q`
+    for (size_t i = 0; i < segment_size; ++i) {
+        for (size_t j = 0; j < segment_size; ++j) {
+            size_t index_row = head_number * segment_size + i;
+            size_t index_col = head_number * segment_size + j;
+            grad_weights_q[index_row][index_col] += grad_weights_q_local_single_head[i][j];
+            grad_weights_k[index_row][index_col] += grad_weights_k_local_single_head[i][j];
+            grad_weights_v[index_row][index_col] += grad_weights_v_local_single_head[i][j];
+        }
+    }
+
+    // Plug in `grad_query_local_single_head` to `grad_query_full_output`
+    for (size_t i = 0; i < grad_query_local_single_head.size(); ++i) {
+        for (size_t j = 0; j < segment_size; ++j) {
+            size_t index = head_number * segment_size + j;
+            grad_query_full_output[i][index] += grad_query_local_single_head[i][j];
+        }
+    }
+
+    //=============================================================
+    // 5) Combine or return whichever gradient is relevant
+    //=============================================================
+
+   // return grad_query_full_output;
+   return grad_output;
+}
+
 
 
 
@@ -264,27 +391,78 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
     const std::vector<std::vector<float>> &query,
     const std::vector<std::vector<float>> &key,
     const std::vector<std::vector<float>> &value,
-    const std::vector<int>& padding_mask)
-{
-    // Cache the query, key, and value inputs for backpropagation
-    query_cache = query;
-    key_cache   = key;
-    value_cache = value;
+    const std::vector<int>& padding_mask,
+    int head_number
+)
 
-    // 1. Linear transformations for Q, K, V
-    auto Q = Utils::matmul(query, weights_q);
-    auto K = Utils::matmul(key, weights_k);
-    auto V = Utils::matmul(value, weights_v);
+{
+  
+    if(head_number == 0)// We only need to Cache the full sized (unsplited) input vectors once
+    {
+        // Cache the query, key, and value inputs for backpropagation
+        query_cache = query;
+        key_cache   = key;
+        value_cache = value;
+    }
+
+    // Compute segment size based on number of heads
+    size_t segment_size = query[0].size() / num_heads;
+
+    // Split input vectors query, key, and value into smaller segments for this head
+    std::vector<std::vector<float>> query_local_single_head(query.size(), std::vector<float>(segment_size));
+    std::vector<std::vector<float>> key_local_single_head(key.size(), std::vector<float>(segment_size));
+    std::vector<std::vector<float>> value_local_single_head(value.size(), std::vector<float>(segment_size));
+
+    // Split weight matrices into smaller segments for this head
+    std::vector<std::vector<float>> weights_q_local_single_head(segment_size, std::vector<float>(segment_size));
+    std::vector<std::vector<float>> weights_k_local_single_head(segment_size, std::vector<float>(segment_size));
+    std::vector<std::vector<float>> weights_v_local_single_head(segment_size, std::vector<float>(segment_size));
+
+    for (size_t i = 0; i < query.size(); ++i) {
+        for (size_t j = 0; j < segment_size; ++j) {
+            int index = head_number * segment_size + j;
+            query_local_single_head[i][j] = query[i][index];
+            key_local_single_head[i][j] = key[i][index];
+            value_local_single_head[i][j] = value[i][index];
+        }
+    }
+
+    for (size_t i = 0; i < segment_size; ++i) {
+        for (size_t j = 0; j < segment_size; ++j) {
+            int index_col = head_number * segment_size + j;
+            int index_row = head_number * segment_size + i;
+            weights_q_local_single_head[i][j] = weights_q[index_row][index_col];
+            weights_k_local_single_head[i][j] = weights_k[index_row][index_col];
+            weights_v_local_single_head[i][j] = weights_v[index_row][index_col];
+        }
+    }
+
+    // 1. Linear transformations for Q, K, V for this head
+    auto Q = Utils::matmul(query_local_single_head, weights_q_local_single_head);
+    auto K = Utils::matmul(key_local_single_head, weights_k_local_single_head);
+    auto V = Utils::matmul(value_local_single_head, weights_v_local_single_head);
 
     // 2. Scaled dot-product attention
+    std::vector<std::vector<float>> attention_output;
 #ifndef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION
-    auto attention_output = scaled_dot_product_attention(Q, K, V, padding_mask);
+    attention_output = scaled_dot_product_attention(Q, K, V, padding_mask);
 #else
-    auto attention_output = scaled_dot_product_attention_with_printout(Q, K, V);
+    attention_output = scaled_dot_product_attention_with_printout(Q, K, V);
 #endif
 
-    return attention_output;
+    // Merge attention output back into original format
+    std::vector<std::vector<float>> merged_attention_output(attention_output.size(), std::vector<float>(query[0].size(), 0.0f));
+
+    for (size_t i = 0; i < attention_output.size(); ++i) {
+        for (size_t j = 0; j < segment_size; ++j) {
+            int index = head_number * segment_size + j;
+            merged_attention_output[i][index] = attention_output[i][j];
+        }
+    }
+
+    return merged_attention_output;
 }
+
 #include <stdexcept> // for std::out_of_range
 
 float MultiHeadAttention::read_weight(const std::string& matrix_type, int row, int col) const

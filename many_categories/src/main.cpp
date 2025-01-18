@@ -449,7 +449,7 @@ int main() {
                                                      std::vector<float>(final_weights[0].size(), 0.0f));
     std::vector<float> velocity_bias(final_bias.size(), 0.0f);
 
-    GLOBAL_learning_rate = 0.001;//0.0001
+    GLOBAL_learning_rate = 0.0001;//0.0001
     GLOBAL_momentum = 0.9;
     GLOBAL_ATTENTION_learning_rate = GLOBAL_learning_rate *1.0;//0.1
     GLOBAL_ATTENTION_momentum = GLOBAL_momentum*1.0; //0.5  

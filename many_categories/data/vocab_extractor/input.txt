@@ -18,7 +18,7 @@ Studies on microbiomes show how gut bacteria influence overall health, from dige
 Robotics engineers are designing machines capable of operating in extreme environments, from ocean depths to outer space.
 Research into dark matter and dark energy aims to explain the unseen components of the universe's mass-energy composition.
 Scientists are deploying satellites to monitor deforestation and desertification in real-time, aiding conservation efforts.
-Biologists study the adaptations of extremophiles—organisms thriving in hostile environments—for insights into life’s resilience.
+Biologists study the adaptations of extremophiles-organisms thriving in hostile environments-for insights into life's resilience.
 Synthetic biology enables the creation of artificial cells, advancing drug development and bioengineering.
 Cryonics research investigates freezing biological tissues for preservation and future revival, sparking ethical debates.
 Telescopes scanning the night sky have detected gravitational waves, confirming Einstein's century-old prediction.

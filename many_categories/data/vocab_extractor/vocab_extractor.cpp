@@ -5,7 +5,8 @@
 #include <sstream>
 #include <algorithm>
 #include <set>
-#include <cctype> // Make sure to include this for tolower
+#include <random>
+#include <cctype> // For tolower
 
 using namespace std;
 
@@ -18,6 +19,18 @@ string cleanWord(string word) {
         }
     }
     return cleanedWord;
+}
+
+// Function to perform Fisher-Yates Shuffle
+void fisherYatesShuffle(vector<string>& words) {
+    random_device rd;
+    mt19937 g(rd());
+
+    for (size_t i = words.size() - 1; i > 0; --i) {
+        uniform_int_distribution<size_t> dist(0, i);
+        size_t j = dist(g);
+        swap(words[i], words[j]);
+    }
 }
 
 int main() {
@@ -65,7 +78,50 @@ int main() {
     inputFile.close();
     outputFile.close();
 
-    cout << "Vocabulary extraction complete. Output written to vocab_extracted.txt" << endl;
+    // Open the file we just created to read its content
+    ifstream extractedFile("vocab_extracted.txt");
+    ofstream randomizedFile("vocab_extracted_randomized.txt");
+
+    if (!extractedFile.is_open()) {
+        cerr << "Error opening vocab_extracted.txt." << endl;
+        return 1;
+    }
+
+    if (!randomizedFile.is_open()) {
+        cerr << "Error opening vocab_extracted_randomized.txt." << endl;
+        return 1;
+    }
+
+    vector<string> words;
+    string specialLine;
+
+    // Read the special tokens first
+    if (getline(extractedFile, specialLine)) words.push_back(specialLine);
+    if (getline(extractedFile, specialLine)) words.push_back(specialLine);
+
+    string word;
+    while (getline(extractedFile, word)) {
+        words.push_back(word);
+    }
+
+    // Separate the special tokens
+    vector<string> specialTokens(words.begin(), words.begin() + 2);
+    vector<string> normalWords(words.begin() + 2, words.end());
+
+    // Shuffle the normal words
+    fisherYatesShuffle(normalWords);
+
+    // Write the special tokens back
+    randomizedFile << specialTokens[0] << endl;
+    randomizedFile << specialTokens[1] << endl;
+
+    // Write the shuffled words to the new file
+    for (const string& shuffledWord : normalWords) {
+        randomizedFile << shuffledWord << endl;
+    }
+
+    extractedFile.close();
+    randomizedFile.close();
 
     return 0;
 }

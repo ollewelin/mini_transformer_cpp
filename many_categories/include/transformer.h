@@ -50,6 +50,7 @@ public:
         int row,
         int col
     ) const;
+    bool inference_mode;
 
 private:
     Embedding embedding;

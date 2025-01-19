@@ -169,69 +169,49 @@ std::vector<int> tokenize(const std::string &sentence, const std::unordered_map<
 }
 
 
-bool load_labels_from_file(const std::string &label_file, std::unordered_map<std::string, int> &label_map) {
-    std::ifstream ifs(label_file);
-    if (!ifs.is_open()) {
-        std::cerr << "Error: Could not open label file: " << label_file << std::endl;
-        return false;
-    }
-
-    std::string line;
-    int label_id = 0;
-    while (std::getline(ifs, line)) {
-        line.erase(std::remove_if(line.begin(), line.end(), ::isspace), line.end());
-        if (!line.empty()) {
-            label_map[line] = label_id++;
-        }
-    }
-
-    ifs.close();
-    if (label_map.size() != 10) {
-        std::cerr << "Error: The label file must contain exactly 10 labels." << std::endl;
-        return false;
-    }
-
-    return true;
-}
-
-#include <filesystem>
-
-// Updated function
-bool prepare_dataset_from_files(const std::vector<std::string> &input_files,
-                                const std::unordered_map<std::string, int> &label_map,
+// ------------- NEW: prepare dataset from question and answer files -------------
+bool prepare_dataset_from_files(const std::string &question_file,
+                                const std::string &answer_file,
                                 std::vector<std::vector<int>> &data,
                                 std::vector<int> &labels,
-                                const std::unordered_map<std::string, int> &vocab) {
+                                const std::unordered_map<std::string, int> &vocab)
+{
+    std::ifstream ifs_q(question_file);
+    std::ifstream ifs_a(answer_file);
+
+    if (!ifs_q.is_open()) {
+        std::cerr << "Error: Could not open question file: " << question_file << std::endl;
+        return false;
+    }
+    if (!ifs_a.is_open()) {
+        std::cerr << "Error: Could not open answer file: " << answer_file << std::endl;
+        return false;
+    }
+
     data.clear();
     labels.clear();
 
-    for (const auto &file : input_files) {
-        std::ifstream ifs(file);
-        if (!ifs.is_open()) {
-            std::cerr << "Error: Could not open file: " << file << std::endl;
-            return false;
-        }
-
-        // Extract the category name from the file name (remove .txt extension)
-        std::string category_name = std::filesystem::path(file).stem().string();
-        auto label_it = label_map.find(category_name);
-        if (label_it == label_map.end()) {
-            std::cerr << "Error: No label mapping found for file: " << file << " (category: " << category_name << ")" << std::endl;
-            return false;
-        }
-
-        int label = label_it->second;
-        std::string line;
-        while (std::getline(ifs, line)) {
-            if (line.empty()) continue;
-            std::vector<int> tokens = tokenize(line, vocab);
-            data.push_back(tokens);
-            labels.push_back(label);
-        }
-
-        ifs.close();
+    // Read questions, label=0
+    std::string line;
+    while (std::getline(ifs_q, line)) {
+        if (line.empty()) continue;  // skip empty lines
+        std::vector<int> question_tokens = tokenize(line, vocab);
+        data.push_back(question_tokens);
+        labels.push_back(0); // 0 for Question
     }
 
-    std::cout << "Loaded " << data.size() << " examples across " << input_files.size() << " categories." << std::endl;
+    // Read answers, label=1
+    while (std::getline(ifs_a, line)) {
+        if (line.empty()) continue; // skip empty lines
+        std::vector<int> answer_tokens = tokenize(line, vocab);
+        data.push_back(answer_tokens);
+        labels.push_back(1); // 1 for Answer
+    }
+
+    ifs_q.close();
+    ifs_a.close();
+
+    // Quick check
+    std::cout << "Loaded " << data.size() << " examples total (Questions + Answers)." << std::endl;
     return true;
 }

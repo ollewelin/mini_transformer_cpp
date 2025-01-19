@@ -627,7 +627,7 @@ int main() {
                     // However, higher d_model also increases computational complexity and 
                     // the risk of overfitting for small datasets, so a balance is needed.
 
-    int num_heads = 4;// Number of attention heads. The attention class split the Q,K and V vector bus into smaller attention vectors 
+    int num_heads = 1;// Number of attention heads. The attention class split the Q,K and V vector bus into smaller attention vectors 
                       // and then the splitted Q_split,K_split and V_split vectors combined togheter again before enter the global Q,K and V vector bus feed forward
                       // so if num_heads = 4 and d_model = 64 each attention have only d_model/num_heads = 64/4 = 16 loacal dimentsion to calculate on
     int d_ff = 256;   // d_ff: Dimensionality of the hidden layer in the feed-forward network.

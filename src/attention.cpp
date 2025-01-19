@@ -548,11 +548,10 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
             scores[i][j] /= scale_factor;
         }
     }
-    // 3. Apply masking to prevent attending to future tokens
-    // Apply masking to prevent attending to future tokens and padding
+    // 3. Apply masking 
     for (size_t i = 0; i < scores.size(); ++i) {
         for (size_t j = 0; j < scores[i].size(); ++j) {
-            if (j > i || padding_mask[j] == 0) {
+            if (padding_mask[j] == 0) {
                 scores[i][j] = -std::numeric_limits<float>::infinity();
             }
         }
@@ -612,14 +611,12 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
     Utils::print_matrix(scores);
     cout << "Each score is scaled to adjust for the dimensionality of the key vectors.\n";
     
-    // 3. Apply masking to prevent attending to future tokens
-    cout << "\nStep 3: Apply masking to prevent attending to future tokens\n";
-    for (size_t i = 0; i < scores.size(); ++i)
-    {
-        for (size_t j = 0; j < scores[i].size(); ++j)
-        {
-            if (j > i) // Mask future positions
-            {
+    // 3. Apply masking
+    cout << "\nStep 3: Apply masking\n";
+    // 3. Apply masking 
+    for (size_t i = 0; i < scores.size(); ++i) {
+        for (size_t j = 0; j < scores[i].size(); ++j) {
+            if (padding_mask[j] == 0) {
                 scores[i][j] = -std::numeric_limits<float>::infinity();
             }
         }

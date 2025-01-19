@@ -352,7 +352,7 @@ int main() {
 
     // Set your Transformer hyperparameters
     int d_model = 64;  
-    int num_heads = 4; 
+    int num_heads = 1; 
     int d_ff = 256;    
     int num_layers = 6;
 
@@ -500,6 +500,7 @@ int main() {
                 // Compute training loss
                 float loss = cross_entropy_loss(probabilities, train_labels[i]);
                 epoch_loss += loss;
+                
             }
 
             float correct_ratio_train = (float)correct_count_train / (float)train_dataset_2D.size();

@@ -58,7 +58,7 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
     for (size_t i = 0; i < attention_layers.size(); ++i) {
         // Save the input for residual connection
         residual_connections.push_back(output);
-
+        attention_layers[i].inference_mode = inference_mode;
         // Apply MultiHeadAttention with padding mask
         auto attention_output = attention_layers[i].forward(output, output, output, padding_mask, 0);
         for(int j=1;j<Transformer::num_heads;j++)

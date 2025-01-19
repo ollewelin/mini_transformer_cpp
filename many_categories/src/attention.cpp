@@ -94,148 +94,9 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, bool load_par
         std::cout << "Attention weights for layer " << layer_index << " initialized with random values." << std::endl;
 
     }
-#ifdef PRINT_OUT_INIT_VECTORS
-    // Print a few rows of weights_q, weights_k, and weights_v
-    std::cout << "\nSample rows of weights_q for layer " << layer_index << ":" << std::endl;
-    for (size_t i = 0; i < std::min<size_t>(3, weights_q.size()); ++i) {
-        for (float val : weights_q[i]) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-    }
 
-    std::cout << "\nSample rows of weights_k for layer " << layer_index << ":" << std::endl;
-    for (size_t i = 0; i < std::min<size_t>(3, weights_k.size()); ++i) {
-        for (float val : weights_k[i]) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    std::cout << "\nSample rows of weights_v for layer " << layer_index << ":" << std::endl;
-    for (size_t i = 0; i < std::min<size_t>(3, weights_v.size()); ++i) {
-        for (float val : weights_v[i]) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-    }
-#endif
 }
 
-/*
-std::vector<std::vector<float>> MultiHeadAttention::backward(
-    const std::vector<std::vector<float>>& grad_output,
-    int head_number
-) {
-    //=============================================================
-    // 0) Setup / Initialize local grad buffers
-    //=============================================================
-    // grad_output has the same shape as the 'attention_output' from forward
-    // We'll need partial derivatives for Q, K, V, etc.
-    std::vector<std::vector<float>> dV;      // same shape as V
-    std::vector<std::vector<float>> dQ;      // same shape as Q
-    std::vector<std::vector<float>> dK;      // same shape as K
-
-    // You may want to initialize them to zeros. E.g.:
-    // dV = Utils::zeros_like(value_cache * weights_v); etc.
-
-    // Also, if you stored the final attention probs from forward:
-    // "attention_probs_cache" shape = (batch_size x seq_len, seq_len)
-    // We'll call it A for short in the comments.
-    auto A = attention_probs_cache; // just to reference it easily
-
-    //=============================================================
-    // 1) Backprop through final matmul: output = A * V
-    //    => dA = grad_output * V^T
-    //    => dV = A^T * grad_output
-    //=============================================================
-    // dV = A^T matmul grad_output
-    dV = Utils::matmul(Utils::transpose(A), grad_output);
-
-    // partial derivative w.r.t. attention_probs A
-    // dA = grad_output matmul V^T
-    auto dA = Utils::matmul(grad_output, Utils::transpose(value_cache ));// i.e. V 
-    // Actually, you used V = (value_cache x weights_v).
-    // So you likely need 'Utils::transpose(V)' from your forward step. 
-    // If you didn't store V explicitly, you can compute it again:
-    auto V = Utils::matmul(value_cache, weights_v);
-    // then dA = grad_output matmul transpose(V)
-    dA = Utils::matmul(grad_output, Utils::transpose(V));
-
-    //=============================================================
-    // 2) Backprop through softmax: A = softmax(scores)
-    //    => dScores = dA * derivative_of_softmax(scores)
-    //=============================================================
-    // You typically do an element-wise formula:
-    // dScores[i] = A[i] * (dA[i] - sum_j(A[j]*dA[j]))
-    // Implementation depends on your Utils::softmax derivative.
-
-    std::vector<std::vector<float>> dScores = Utils::softmax_backward(dA, A);
-
-    // (Pseudo-code: you'll implement the derivative in your Utils or directly here.)
-
-    //=============================================================
-    // 3) Backprop through 'scores = (QK^T)/sqrt(dk)' + mask
-    //    => dQ = dScores matmul K  * (1/sqrt(dk))
-    //    => dK = dScores^T matmul Q * (1/sqrt(dk))
-    //=============================================================
-    float scale_factor = 1.0f / std::sqrt(static_cast<float>(key_cache[0].size()));
-
-    // Recompute Q = query_cache x weights_q
-    auto Q = Utils::matmul(query_cache, weights_q);
-    // Recompute K = key_cache   x weights_k
-    auto K_ = Utils::matmul(key_cache,   weights_k);
-
-    // dQ
-    // dimension check: dScores shape == QK^T shape. Typically (batch_size x seq_len1, seq_len2)
-    // So dQ = dScores matmul K_ * scale_factor
-    dQ = Utils::matmul(dScores, K_);
-    Utils::scale_inplace(dQ, scale_factor);
-
-    // dK
-    // dK = dScores^T matmul Q * scale_factor
-    auto dK_tmp = Utils::matmul(Utils::transpose(dScores), Q);
-    Utils::scale_inplace(dK_tmp, scale_factor);
-
-    //=============================================================
-    // 4) Backprop to the linear transformations:
-    //    Q = query_cache x weights_q
-    //    => dWeights_q = (query_cache^T) matmul dQ
-    //    => dQuery     = dQ matmul (weights_q^T)
-    // Similarly for K, V
-    //=============================================================
-    // (a) grad_weights_v
-    // V = value_cache x weights_v
-    // dWeights_v = (value_cache^T) x dV
-    grad_weights_v = Utils::matmul(Utils::transpose(value_cache), dV);
-
-    // If you need grad w.r.t. the original value input:
-    // grad_value = dV matmul transpose(weights_v)
-    // We'll return grad_value or store it if you want to backprop further.
-    auto grad_value = Utils::matmul(dV, Utils::transpose(weights_v));
-
-    // (b) grad_weights_q
-    grad_weights_q = Utils::matmul(Utils::transpose(query_cache), dQ);
-
-    // (c) grad_weights_k
-    grad_weights_k = Utils::matmul(Utils::transpose(key_cache), dK_tmp);
-
-    // (d) If you need grad w.r.t. the original query/key:
-    // grad_query  = dQ      matmul transpose(weights_q)
-    // grad_key    = dK_tmp  matmul transpose(weights_k)
-    auto grad_query = Utils::matmul(dQ,     Utils::transpose(weights_q));
-    auto grad_key   = Utils::matmul(dK_tmp, Utils::transpose(weights_k));
-    
-    //=============================================================
-    // 5) Combine or return whichever gradient is relevant
-    //=============================================================
-    // Your signature returns std::vector<std::vector<float>>. 
-    // Often we return grad_w.r.t "query" (or all three). 
-    // But let's say you return grad_query for demonstration:
-    return grad_query;
-}
-
-*/
 
 std::vector<std::vector<float>> MultiHeadAttention::backward(
     const std::vector<std::vector<float>>& grad_output,
@@ -532,7 +393,6 @@ void MultiHeadAttention::update_weights()
     }
 }
 
-#ifndef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION  
 std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention(
     const std::vector<std::vector<float>>& query,
     const std::vector<std::vector<float>>& key,
@@ -560,7 +420,14 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
     // 4. Apply softmax to scores
     // Softmax
     for (size_t i = 0; i < scores.size(); ++i) {
-        scores[i] = Utils::softmax(scores[i]);
+        if(inference_mode == true)
+        {
+            scores[i] = Utils::softmax(scores[i]);
+        }
+        else
+        {
+            scores[i] = Utils::denoise_softmax(scores[i], 0.05);
+        }
     }
     // 5. Multiply scores with V
     // Store final attention distribution for backprop
@@ -569,89 +436,3 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
     return output;
 }
 
-#else // Use of PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION in config.h
-std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention_with_printout(
-    const std::vector<std::vector<float>> &query,
-    const std::vector<std::vector<float>> &key,
-    const std::vector<std::vector<float>> &value)
-{
-    using namespace std;
-
-    cout << "\n=== Scaled Dot-Product Attention Debug Output ===\n";
-
-    // 1. Compute QK^T
-    cout << "\nStep 1: Compute QK^T\n";
-    cout << "Query (Q) matrix (shape: " << query.size() << " x " << query[0].size() << "):\n";
-    Utils::print_matrix(query); // Assuming Utils has a method to print matrices
-    cout << "Key (K) matrix (shape: " << key.size() << " x " << key[0].size() << "):\n";
-    Utils::print_matrix(key);
-
-    auto scores = Utils::matmul(query, Utils::transpose(key));
-    cout << "QK^T (scores matrix, shape: " << scores.size() << " x " << scores[0].size() << "):\n";
-    Utils::print_matrix(scores);
-    cout << "Each element in this matrix represents the dot product similarity between a query vector (row) and a key vector (column).\n";
-    cout << "For example:\n";
-    cout << "  - scores[0][0] = dot product of Q[0] and K[0] (similarity between token 1's query and token 1's key).\n";
-    cout << "  - scores[0][1] = dot product of Q[0] and K[1] (similarity between token 1's query and token 2's key).\n";
-    cout << "  - scores[1][2] = dot product of Q[1] and K[2] (similarity between token 2's query and token 3's key).\n";
-    cout << "Each row represents the similarity of a specific token's query with all tokens' keys, "
-         << "and each column represents the similarity of all queries with a specific token's key.\n";
-
-    // 2. Scale scores by sqrt(d_k)
-    cout << "\nStep 2: Scale scores by sqrt(d_k)\n";
-    float scale_factor = std::sqrt(static_cast<float>(key[0].size()));
-    cout << "Scaling factor (sqrt(d_k)): " << scale_factor << endl;
-    for (size_t i = 0; i < scores.size(); ++i)
-    {
-        for (size_t j = 0; j < scores[0].size(); ++j)
-        {
-            scores[i][j] /= scale_factor;
-        }
-    }
-    cout << "Scaled scores matrix:\n";
-    Utils::print_matrix(scores);
-    cout << "Each score is scaled to adjust for the dimensionality of the key vectors.\n";
-    
-    // 3. Apply masking to prevent attending to future tokens
-    cout << "\nStep 3: Apply masking to prevent attending to future tokens\n";
-    for (size_t i = 0; i < scores.size(); ++i)
-    {
-        for (size_t j = 0; j < scores[i].size(); ++j)
-        {
-            if (j > i) // Mask future positions
-            {
-                scores[i][j] = -std::numeric_limits<float>::infinity();
-            }
-        }
-    }
-    cout << "Masked scores matrix:\n";
-    Utils::print_matrix(scores);
-    cout << "This matrix shows the scores after applying a mask to ensure that a token only attends to itself and earlier tokens.\n";
-
-    // 4. Apply softmax to scores
-    cout << "\nStep 4: Apply softmax to scores\n";
-    for (size_t i = 0; i < scores.size(); ++i)
-    {
-        scores[i] = Utils::softmax(scores[i]);
-    }
-    cout << "Softmax applied (attention weights):\n";
-    Utils::print_matrix(scores);
-    cout << "Each row represents the attention distribution for a token. "
-         << "The values sum to 1, showing how much each token attends to other tokens.\n";
-
-    // 5. Multiply scores with V
-    cout << "\nStep 5: Multiply scores with Value (V) matrix\n";
-    cout << "Value (V) matrix (shape: " << value.size() << " x " << value[0].size() << "):\n";
-    Utils::print_matrix(value);
-
-    auto output = Utils::matmul(scores, value);
-    cout << "Output matrix (shape: " << output.size() << " x " << output[0].size() << "):\n";
-    Utils::print_matrix(output);
-    cout << "Each row in the output matrix corresponds to the weighted sum of value vectors "
-         << "for each token, based on its attention distribution.\n";
-
-
-    cout << "=== End of Debug Output ===\n";
-    return output;
-}
-#endif

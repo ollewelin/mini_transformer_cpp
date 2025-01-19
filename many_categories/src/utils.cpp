@@ -5,6 +5,11 @@
 #include <algorithm> // Add this for std::max_element
 #include <iomanip>   // For formatted output
 
+#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <random>
+
 bool Utils::check_vocabs(const std::unordered_map<std::string, int>& vocab) {
     std::set<int> indices; // To track used indices
     std::set<std::string> strings; // To track duplicate strings
@@ -151,6 +156,65 @@ std::vector<std::vector<float>> Utils::transpose(const std::vector<std::vector<f
     }
 
     return result;
+}
+
+
+
+
+
+/**
+ * denoise_softmax()
+ *
+ * Applies uniform random noise to each logit based on the standard deviation
+ * of the input logits, then applies a standard softmax.
+ *
+ * @param input                      The logits vector.
+ * @param softmax_denoise_factor    Hyperparameter controlling the noise scale.
+ * @return                           Softmax probabilities after noise injection.
+ */
+std::vector<float> Utils::denoise_softmax(const std::vector<float> &input, float softmax_denoise_factor = 0.05f)
+{
+    // Edge case: if input is empty or only one element, just return normal softmax
+    if (input.size() <= 1) {
+        return Utils::softmax(input);
+    }
+    
+    // 1. Compute mean
+    float sum = 0.0f;
+    for (auto &val : input) {
+        sum += val;
+    }
+    float mean = sum / static_cast<float>(input.size());
+
+    // 2. Compute standard deviation
+    float variance = 0.0f;
+    for (auto &val : input) {
+        float diff = val - mean;
+        variance += diff * diff;
+    }
+    variance /= static_cast<float>(input.size());
+    float stddev = std::sqrt(variance);
+
+    // 3. Determine random range based on std dev
+    float softmax_random_range = stddev * softmax_denoise_factor;
+
+    // 4. Create a random engine & distribution
+    //    For reproducibility, you might make this random engine a class member.
+    //    For demonstration, we seed it with a random_device here.
+    static std::random_device rd; 
+    static std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dist(-softmax_random_range, softmax_random_range);
+
+    // 5. Create a noisy version of the input
+    std::vector<float> noisy_input(input.size());
+    for (size_t i = 0; i < input.size(); ++i) {
+        // Add uniform noise in [-softmax_random_range, +softmax_random_range]
+        float noise = dist(gen);
+        noisy_input[i] = input[i] + noise;
+    }
+
+    // 6. Return the standard softmax on the noisy input
+    return Utils::softmax(noisy_input);
 }
 
 std::vector<float> Utils::softmax(const std::vector<float> &input)

@@ -5,6 +5,8 @@
 #include <ctime>    // For std::time
 #include <iostream> // For std::cout and std::endl
 #include <fstream>  // For file I/O
+#include "simple_normalizer.h"
+
 
 const std::string MultiHeadAttention::file_prefix_attention_weights_q_layer_ = "attention_weights_q_layer_";
 const std::string MultiHeadAttention::file_prefix_attention_weights_k_layer_ = "attention_weights_k_layer_";
@@ -396,7 +398,9 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
 )
 
 {
-  
+ //   std::cout << " =================================== " << std::endl;
+ //   std::cout << " head_number: " << head_number << std::endl;
+ //   std::cout << " =================================== " << std::endl;
     if(head_number == 0)// We only need to Cache the full sized (unsplited) input vectors once
     {
         // Cache the query, key, and value inputs for backpropagation
@@ -407,6 +411,7 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
 
     // Compute segment size based on number of heads
     size_t segment_size = query[0].size() / num_heads;
+    size_t row_size = query.size();
 
     // Split input vectors query, key, and value into smaller segments for this head
     std::vector<std::vector<float>> query_local_single_head(query.size(), std::vector<float>(segment_size));
@@ -419,21 +424,20 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
     std::vector<std::vector<float>> weights_v_local_single_head(segment_size, std::vector<float>(segment_size));
 
     for (size_t i = 0; i < query.size(); ++i) {
-        for (size_t j = 0; j < segment_size; ++j) {
-            int index = head_number * segment_size + j;
-            query_local_single_head[i][j] = query[i][index];
-            key_local_single_head[i][j] = key[i][index];
-            value_local_single_head[i][j] = value[i][index];
+        for (size_t j = 0; j < row_size; ++j) {
+            int index_col = head_number * segment_size + j;
+            query_local_single_head[i][j] = query[i][index_col];
+            key_local_single_head[i][j] = key[i][index_col];
+            value_local_single_head[i][j] = value[i][index_col];
         }
     }
 
-    for (size_t i = 0; i < segment_size; ++i) {
+    for (size_t i = 0; i < row_size; ++i) {
         for (size_t j = 0; j < segment_size; ++j) {
             int index_col = head_number * segment_size + j;
-            int index_row = head_number * segment_size + i;
-            weights_q_local_single_head[i][j] = weights_q[index_row][index_col];
-            weights_k_local_single_head[i][j] = weights_k[index_row][index_col];
-            weights_v_local_single_head[i][j] = weights_v[index_row][index_col];
+            weights_q_local_single_head[i][j] = weights_q[i][index_col];
+            weights_k_local_single_head[i][j] = weights_k[i][index_col];
+            weights_v_local_single_head[i][j] = weights_v[i][index_col];
         }
     }
 
@@ -541,6 +545,8 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
 {
     // 1. Compute QK^T
     auto scores = Utils::matmul(query, Utils::transpose(key));
+//    std::cout << "1. Compute QK^T \n";
+//    Utils::print_matrix(scores);      
     // 2. Scale scores by sqrt(d_k)
     float scale_factor = std::sqrt(static_cast<float>(key[0].size()));
     for (size_t i = 0; i < scores.size(); ++i) {
@@ -548,6 +554,8 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
             scores[i][j] /= scale_factor;
         }
     }
+//    std::cout << "2. Scale scores by sqrt(d_k) \n";
+//    Utils::print_matrix(scores);    
     // 3. Apply masking 
     for (size_t i = 0; i < scores.size(); ++i) {
         for (size_t j = 0; j < scores[i].size(); ++j) {
@@ -556,15 +564,21 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
             }
         }
     }
+//        std::cout << "3. Apply masking\n";
+//    Utils::print_matrix(scores);  
     // 4. Apply softmax to scores
     // Softmax
     for (size_t i = 0; i < scores.size(); ++i) {
         scores[i] = Utils::softmax(scores[i]);
     }
+//        std::cout << "4. Apply softmax to scores\n";
+//    Utils::print_matrix(scores);     
     // 5. Multiply scores with V
     // Store final attention distribution for backprop
     attention_probs_cache = scores;
     auto output = Utils::matmul(scores, value);
+//            std::cout << "5. Multiply scores with V\n";
+//    Utils::print_matrix(output); 
     return output;
 }
 

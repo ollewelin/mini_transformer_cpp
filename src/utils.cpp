@@ -218,6 +218,7 @@ void Utils::scale_inplace(std::vector<std::vector<float>>& matrix, float scale_f
     }
 }
 
+
 void Utils::print_matrix(const std::vector<std::vector<float>>& matrix)
 {
     std::cout << "[\n";
@@ -232,4 +233,18 @@ void Utils::print_matrix(const std::vector<std::vector<float>>& matrix)
         std::cout << "]\n";
     }
     std::cout << "]\n";
+
+}
+
+float Utils::simple_L2_norm(const std::vector<std::vector<float>>& matrix)
+{
+    float sum_squares = 0.0f;
+    for (const auto& row : matrix)
+    {
+        for (const auto& val : row)
+        {
+            sum_squares += val * val;
+        }
+    }
+    return std::sqrt(sum_squares);
 }

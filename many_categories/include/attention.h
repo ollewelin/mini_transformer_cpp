@@ -30,9 +30,18 @@ public:
     // Save weights to binary files
     void save_weights(int layer_index);
     float read_weight(const std::string& matrix_type, int row, int col) const;
-    bool inference_mode;
 
-private:
+
+#ifdef TEST_ATTENTION
+public:
+#else
+    #ifdef PRINT_OUT_TEST_ATTENTION_FORWARD_OPERATION
+    public:
+    #else
+    private:
+    #endif
+#endif
+
     // (Optionally public for testing or debugging)
     std::vector<std::vector<float>> scaled_dot_product_attention(
         const std::vector<std::vector<float>>& query,
@@ -48,6 +57,7 @@ private:
     std::vector<std::vector<float>> weights_k; // Key weights
     std::vector<std::vector<float>> weights_v; // Value weights
 
+private:
     // Static constants for storing/loading
     static const std::string file_prefix_attention_weights_q_layer_;
     static const std::string file_prefix_attention_weights_k_layer_;

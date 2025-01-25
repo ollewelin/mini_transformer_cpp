@@ -17,7 +17,8 @@ namespace Utils {
     
     // Apply softmax to a vector
     std::vector<float> softmax(const std::vector<float>& input);
-    std::vector<float> denoise_softmax(const std::vector<float> &input, float softmax_denoise_factor);
+    float simple_L2_norm(const std::vector<std::vector<float>>& matrix);
+
 
 std::vector<std::vector<float>> softmax_backward(
     const std::vector<std::vector<float>>& grad_output,

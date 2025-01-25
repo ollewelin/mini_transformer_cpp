@@ -15,6 +15,7 @@
 #include "config.h"
 #include "utils.h"
 #include "layer_normalization.h"
+#include "simple_normalizer.h"
 
 class Transformer
 {
@@ -29,8 +30,9 @@ public:
         {
             attention_layers.emplace_back(d_model, num_heads, load_parameters_yes_no, i);
             feed_forward_layers.emplace_back(d_model, d_ff, load_parameters_yes_no, i);
-         //   layer_norms.emplace_back(d_model, load_parameters_yes_no, i*2);// Instantiate layer normalization object
-         //   layer_norms.emplace_back(d_model, load_parameters_yes_no, i*2+1);
+
+            attention_L2_norm.emplace_back();// Instantiate layer normalization object
+            feed_forward_L2_norm.emplace_back();// Instantiate layer normalization object
         }
 
         std::cout << "Transformer initialized with " << num_layers << " layers." << std::endl;
@@ -50,7 +52,6 @@ public:
         int row,
         int col
     ) const;
-    bool inference_mode;
 
 private:
     Embedding embedding;
@@ -58,16 +59,15 @@ private:
     std::vector<MultiHeadAttention> attention_layers;
     std::vector<FeedForward> feed_forward_layers;
 
-    // New layer normalization objects
- //   std::vector<LayerNormalization> layer_norms;
+    std::vector<SimpleNormalization> attention_L2_norm;
+    std::vector<SimpleNormalization> feed_forward_L2_norm;
+
 
     // Intermediate values for backpropagation
     std::vector<int> input_tokens;
     std::vector<std::vector<std::vector<float>>> residual_connections;
     std::vector<std::vector<std::vector<float>>> attention_outputs;
-    std::vector<std::vector<std::vector<float>>> normalized_attention_outputs;
     std::vector<std::vector<std::vector<float>>> feedforward_outputs;
-    std::vector<std::vector<std::vector<float>>> normalized_feedforward_outputs;
 
     // Helper functions
     std::vector<std::vector<float>> add_matrices(const std::vector<std::vector<float>> &a, const std::vector<std::vector<float>> &b);

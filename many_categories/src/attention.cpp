@@ -236,8 +236,8 @@ std::vector<std::vector<float>> MultiHeadAttention::backward(
     // 5) Combine or return whichever gradient is relevant
     //=============================================================
 
-   // return grad_query_full_output;
-   return grad_output;
+    return grad_query_full_output;
+  // return grad_output;
 }
 
 

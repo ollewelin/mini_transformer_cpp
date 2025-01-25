@@ -48,10 +48,11 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
         // Save the input for residual connection
         residual_connections.clear();
         residual_connections.push_back(transformer_matrix);
+        auto transformer_matrix_input = transformer_matrix;
         // Apply MultiHeadAttention with padding mask
         for(int j=0;j<Transformer::num_heads;j++)
         {
-            transformer_matrix = attention_layers[i].forward(transformer_matrix, transformer_matrix, transformer_matrix, padding_mask, j);
+            transformer_matrix = attention_layers[i].forward(transformer_matrix_input, transformer_matrix_input, transformer_matrix_input, padding_mask, j);
         }
         transformer_matrix = attention_L2_norm[i].forward(transformer_matrix);
         // Mask padding in attention output

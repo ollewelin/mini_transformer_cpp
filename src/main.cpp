@@ -531,7 +531,9 @@ int main() {
         {0.5, 0.4, 0.6, 0.06}, // Value vector for token 2
         {2.2, 1.3, 0.0, 3.11}  // Value vector for token 3
     };
-
+    std::vector<int> padding_mask = {
+        {1, 1, 1, 1}
+    };
     // Check matrix sizes using Utils
     Utils::check_matrices(Q, K, V);
 
@@ -579,7 +581,7 @@ int main() {
     cout << "=====================================================================\n";
     
     // Call scaled_dot_product_attention_with_printout for testing
-    auto attention_output_printout = attention_layer_printout.scaled_dot_product_attention_with_printout(Q, K, V);
+    auto attention_output_printout = attention_layer_printout.scaled_dot_product_attention(Q, K, V, padding_mask);
 
     cout << "=====================================================================\n";
 
@@ -603,7 +605,7 @@ int main() {
     cout << "token_cnt length: " << length << endl;
     // Define parameters
     int vocab_size = 5000;
-    int d_model = 64; // The "resolution" of the positional encoding and embedding space. 
+    int d_model = 24; // The "resolution" of the positional encoding and embedding space. 
                     // Think of it like a meter stick with 128 evenly spaced lines: 
                     // this determines how finely the meaning of a token can be represented
                     // across multiple dimensions.
@@ -630,7 +632,7 @@ int main() {
     int num_heads = 1;// Number of attention heads. The attention class split the Q,K and V vector bus into smaller attention vectors 
                       // and then the splitted Q_split,K_split and V_split vectors combined togheter again before enter the global Q,K and V vector bus feed forward
                       // so if num_heads = 4 and d_model = 64 each attention have only d_model/num_heads = 64/4 = 16 loacal dimentsion to calculate on
-    int d_ff = 256;   // d_ff: Dimensionality of the hidden layer in the feed-forward network.
+    int d_ff = 96;   // d_ff: Dimensionality of the hidden layer in the feed-forward network.
                       //       Each feed-forward network in the transformer consists of two linear layers:
                       //       - The first layer expands the input dimensionality (d_model) to a larger hidden size (d_ff).
                       //       - The second layer projects the hidden layer back down to the original dimensionality (d_model).

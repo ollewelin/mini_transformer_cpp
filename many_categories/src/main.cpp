@@ -404,7 +404,7 @@ int main() {
             std::vector<float>(num_categories, 0.0f));
         std::vector<float> velocity_bias(num_categories, 0.0f);
 
-        GLOBAL_learning_rate = 0.0001f;
+        GLOBAL_learning_rate = 0.001f;
         GLOBAL_momentum = 0.9f;
         GLOBAL_ATTENTION_learning_rate = GLOBAL_learning_rate;
         GLOBAL_ATTENTION_momentum = GLOBAL_momentum;
@@ -424,7 +424,7 @@ int main() {
             int correct_count_train = 0;
 
             // ------------------- TRAINING (forward + backward) -------------------
-            transformer.inference_mode = false;
+            //transformer.inference_mode = false;
             for (size_t i = 0; i < train_dataset_2D.size(); ++i) {
                 // print dots to show progress
                 if (print_dot_cnt < print_dot_interval) {
@@ -509,7 +509,7 @@ int main() {
                       << " | correct_ratio_train: " << correct_ratio_train << "\n";
 
             // --------------- VERIFICATION (forward only, no backward) ---------------
-            transformer.inference_mode = true;
+            //transformer.inference_mode = true;
             float verify_loss = 0.0f;
             int correct_count_verify = 0;
             for (size_t i = 0; i < verify_dataset_2D.size(); ++i) {

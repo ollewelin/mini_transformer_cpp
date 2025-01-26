@@ -57,7 +57,8 @@ public:
     std::vector<std::vector<float>> weights_k; // Key weights
     std::vector<std::vector<float>> weights_v; // Value weights
 
-private:
+//private:
+public:
     // Static constants for storing/loading
     static const std::string file_prefix_attention_weights_q_layer_;
     static const std::string file_prefix_attention_weights_k_layer_;

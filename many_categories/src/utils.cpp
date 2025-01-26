@@ -225,7 +225,7 @@ void Utils::print_matrix(const std::vector<std::vector<float>>& matrix)
     for (const auto& row : matrix) {
         std::cout << "  [";
         for (size_t i = 0; i < row.size(); ++i) {
-            std::cout << std::fixed << std::setprecision(4) << row[i];
+            std::cout << std::fixed << std::setprecision(8) << row[i];
             if (i < row.size() - 1) {
                 std::cout << ", ";
             }

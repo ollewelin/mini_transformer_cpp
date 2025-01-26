@@ -111,7 +111,7 @@ std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vec
         // Backprop attention
         residual_connections.clear();
         residual_connections.push_back(gradient);
-        for(int j=1;j<Transformer::num_heads;j++)
+        for(int j=0;j<Transformer::num_heads;j++)
         {
             gradient = attention_layers[i].backward(gradient, j);
         }

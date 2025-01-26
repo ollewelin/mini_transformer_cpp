@@ -806,8 +806,8 @@ int main() {
 
     GLOBAL_learning_rate = 0.01;
     GLOBAL_momentum = 0.9;
-    GLOBAL_ATTENTION_learning_rate = GLOBAL_learning_rate *0.1;//0.1
-    GLOBAL_ATTENTION_momentum = GLOBAL_momentum*0.1; //0.5  
+    GLOBAL_ATTENTION_learning_rate = GLOBAL_learning_rate;//0.1
+    GLOBAL_ATTENTION_momentum = GLOBAL_momentum; //0.5  
     std::cout << "learning_rate: " << GLOBAL_learning_rate << std::endl;
     std::cout << "momentum: " << GLOBAL_momentum << std::endl;
     // Training loop with gradient computation

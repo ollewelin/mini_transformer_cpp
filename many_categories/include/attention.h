@@ -57,7 +57,8 @@ public:
     std::vector<std::vector<float>> weights_k; // Key weights
     std::vector<std::vector<float>> weights_v; // Value weights
 
-private:
+//private:
+public:
     // Static constants for storing/loading
     static const std::string file_prefix_attention_weights_q_layer_;
     static const std::string file_prefix_attention_weights_k_layer_;
@@ -86,9 +87,32 @@ private:
     std::vector<std::vector<float>> key_cache;   
     std::vector<std::vector<float>> value_cache; 
     std::vector<std::vector<float>> attention_probs_cache; // Post-softmax attention distribution
-
-
     int num_heads;
+    
+    // ------ Caches of partial slices and results ------
+    // For each head, store:
+    //   - the "input slice" to the matmul (Q/K/V)
+    //   - the "local weight" for Q/K/V
+    //   - the "output" of the matmul (the Q_local etc. that go into attention)
+    //   - the final attention output for that head
+
+    // Q/K/V input slices: batch_size x segment_size
+    std::vector<std::vector<std::vector<float>>> Q_local_input_cache;
+    std::vector<std::vector<std::vector<float>>> K_local_input_cache;
+    std::vector<std::vector<std::vector<float>>> V_local_input_cache;
+
+    // local weight slices: segment_size x segment_size
+    std::vector<std::vector<std::vector<float>>> W_q_local_cache;
+    std::vector<std::vector<std::vector<float>>> W_k_local_cache;
+    std::vector<std::vector<std::vector<float>>> W_v_local_cache;
+
+    // outputs of the linear transforms (Q_local, K_local, V_local)
+    std::vector<std::vector<std::vector<float>>> Q_local_cache;
+    std::vector<std::vector<std::vector<float>>> K_local_cache;
+    std::vector<std::vector<std::vector<float>>> V_local_cache;
+
+
+
 };
 
 #endif // ATTENTION_H

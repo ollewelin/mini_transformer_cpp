@@ -525,7 +525,7 @@ int main()
                                                          std::vector<float>(num_categories, 0.0f));
         std::vector<float> velocity_bias(num_categories, 0.0f);
 
-        GLOBAL_learning_rate = 0.0025f;
+        GLOBAL_learning_rate = 0.0001f;
         GLOBAL_momentum = 0.9f;
         GLOBAL_ATTENTION_learning_rate = GLOBAL_learning_rate;
         GLOBAL_ATTENTION_momentum = GLOBAL_momentum;

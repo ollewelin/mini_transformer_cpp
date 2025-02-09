@@ -39,10 +39,14 @@ void Transformer::save_LayerNormalization_weights()
 }
 std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& input, const std::vector<int>& padding_mask) {
     // Step 1: Embedding and positional encoding
+    std::cout << "debug 2" << std::endl;
     std::vector<std::vector<float>> transformer_matrix = embedding.forward(input);
+    Utils::print_matrix_shape(transformer_matrix);
+    std::cout << "debug 3" << std::endl;
     transformer_matrix = pos_encoding.add_positional_encoding(transformer_matrix);
+    std::cout << "debug 4" << std::endl;
     input_tokens = input;//Used for backprop
-
+    std::cout << " ***** num_heads: " << num_heads << std::endl;
     // Step 2: Iterate through attention and feedforward layers
     for (size_t i = 0; i < attention_layers.size(); ++i) {
         // Save the input for residual connection

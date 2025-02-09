@@ -282,6 +282,9 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
 
     // Copy over parts from total weights to local weights
     size_t d_segment_size = weights_q[0].size() / num_heads;
+    std::cout << " num_heads: " << num_heads << std::endl;
+    std::cout << " d_segment_size: " << d_segment_size << std::endl;
+   
     for (size_t i = 0; i < weights_q.size(); ++i)
     {
         for (size_t j = 0; j < d_segment_size; j++)
@@ -291,6 +294,11 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
             W_v_local_cache[head_number][i][j] = weights_v[i][j + d_segment_size * head_number];
         }
     }
+    std::cout << " weights_q shape: " << std::endl;
+    Utils::print_matrix_shape(weights_q);
+
+    std::cout << " W_q_local_cache[0] shape: " << std::endl;
+    Utils::print_matrix_shape(W_q_local_cache[0]);
 
     // 1. Linear transformations for Q, K, V for this head
     query_cache_local[head_number] = Utils::matmul(query, W_q_local_cache[head_number]);

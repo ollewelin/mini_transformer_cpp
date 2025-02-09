@@ -20,7 +20,7 @@
 class Transformer
 {
 public:
-    Transformer(int vocab_size, int d_model, int max_len, int num_heads, int d_ff, int num_layers, bool load_parameters_yes_no)
+    Transformer(int vocab_size, int d_model, int num_heads, int max_len, int d_ff, int num_layers, bool load_parameters_yes_no)
         : embedding(vocab_size, d_model, load_parameters_yes_no),
           pos_encoding(max_len, d_model),
           num_heads(num_heads)
@@ -28,7 +28,7 @@ public:
         num_layers_local = num_layers;
         for (int i = 0; i < num_layers; ++i)
         {
-            attention_layers.emplace_back(d_model, max_len, num_heads, load_parameters_yes_no, i);
+            attention_layers.emplace_back(d_model, num_heads, max_len, load_parameters_yes_no, i);
             feed_forward_layers.emplace_back(d_model, d_ff, load_parameters_yes_no, i);
 
             attention_L2_norm.emplace_back();// Instantiate layer normalization object

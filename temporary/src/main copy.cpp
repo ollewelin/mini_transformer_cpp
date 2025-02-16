@@ -823,11 +823,11 @@ int main() {
 
     // Create transformer
     Transformer transformer(vocab_size, d_model, num_heads, max_len, d_ff, num_layers, load_parameters_yes_no);
-    std::cout << " ** vocab_size: " << vocab_size << std::endl;   
-    std::cout << " ** d_model: " << d_model << std::endl;
-    std::cout << " ** num_heads: " << num_heads << std::endl;
-    std::cout << " ** max_len: " << max_len << std::endl;   
-    std::cout << " ** num_layers: " << num_layers << std::endl;  
+ //   std::cout << " ** vocab_size: " << vocab_size << std::endl;   
+ //   std::cout << " ** d_model: " << d_model << std::endl;
+ //   std::cout << " ** num_heads: " << num_heads << std::endl;
+ //   std::cout << " ** max_len: " << max_len << std::endl;   
+ //   std::cout << " ** num_layers: " << num_layers << std::endl;      
 
     cout << "Do you want to start mini prompt mode? (Y/N): ";
     string response;
@@ -895,12 +895,8 @@ int main() {
             std::cout << std::endl;
 #endif
             // Forward pass through transformer
-            
+            std::cout << "debug 1" << std::endl;
             auto output_trans = transformer.forward(trunc_sequence, padding_mask);
-
-        //    std::cout << "Halt program debug here" << std::endl;
-        //    while(1)
-        //    {}
 #ifdef DEBUG_PRINT_MAIN 
             std::cout << "Transformer Output Before Pooling:" << std::endl;
             print_float_vector_2D(output_trans);

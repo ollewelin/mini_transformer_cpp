@@ -21,6 +21,7 @@ public:
     // Backward pass to compute gradients
     std::vector<std::vector<float>> backward(
         const std::vector<std::vector<float>>& grad_output, // Gradient from the next layer
+        const std::vector<std::vector<float>>& qkv_input,      
         int head_number
     );
 
@@ -103,7 +104,7 @@ public:
     int num_heads;
     int max_len;
     int d_model;
-    
+ 
 };
 
 #endif // ATTENTION_H

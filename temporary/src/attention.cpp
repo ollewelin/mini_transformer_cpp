@@ -36,8 +36,8 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, int max_len, 
       W_k_local_cache(num_heads, std::vector<std::vector<float>>(d_model, std::vector<float>(d_model / num_heads, 0.0f))),
       W_v_local_cache(num_heads, std::vector<std::vector<float>>(d_model, std::vector<float>(d_model / num_heads, 0.0f))),
 
-      grad_total_all_heads(d_model, std::vector<float>(d_model, 0.0f)),
-      merged_attention_output(d_model, std::vector<float>(d_model, 0.0f)),
+      grad_total_all_heads(max_len, std::vector<float>(d_model, 0.0f)),
+      merged_attention_output(max_len, std::vector<float>(d_model, 0.0f)),
       attention_score_cache_local(num_heads, std::vector<std::vector<float>>(max_len, std::vector<float>(max_len, 0.0f))),
 
       // Caches
@@ -47,6 +47,7 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, int max_len, 
       num_heads(num_heads),
       max_len(max_len),
       d_model(d_model)
+
 
 {
     const std::string weights_q_file = file_prefix_attention_weights_q_layer_ + std::to_string(layer_index) + ".bin";
@@ -155,10 +156,12 @@ MultiHeadAttention::MultiHeadAttention(int d_model, int num_heads, int max_len, 
 
 std::vector<std::vector<float>> MultiHeadAttention::backward(
     const std::vector<std::vector<float>> &grad_total,
+    const std::vector<std::vector<float>>& qkv_input,
     int head_number)
 {
     size_t grad_rows = grad_total.size();
     size_t grad_cols = grad_total[0].size() / num_heads;
+
     std::vector<std::vector<float>> grad_output(grad_rows, std::vector<float>(grad_cols, 0.0));
     for(size_t row_cnt=0; row_cnt < grad_rows; row_cnt++)
     {
@@ -167,12 +170,14 @@ std::vector<std::vector<float>> MultiHeadAttention::backward(
             grad_output[row_cnt][col_cnt] = grad_total[row_cnt][col_cnt + head_number * d_model / num_heads];//Copy over this heads gradient only
         }
     }
+
     //=============================================================
     // 1) Backprop through final matmul: output = A * V
     //=============================================================
     auto A = attention_score_cache_local[head_number];
     auto dV = Utils::matmul(Utils::transpose(A), grad_output);
     auto dA = Utils::matmul(grad_output, Utils::transpose(value_cache_local[head_number]));
+
 
     //=============================================================
     // 2) Backprop through softmax
@@ -190,12 +195,13 @@ std::vector<std::vector<float>> MultiHeadAttention::backward(
     Utils::scale_inplace(dQ, scale_factor);
     Utils::scale_inplace(dK, scale_factor);
 
+
     //=============================================================
     // 4) Backprop through the linear transformations
     //=============================================================
-    grad_weights_q_local[head_number] = Utils::matmul(Utils::transpose(query_cache_local[head_number]), dQ);
-    grad_weights_k_local[head_number] = Utils::matmul(Utils::transpose(key_cache_local[head_number]), dK);
-    grad_weights_v_local[head_number] = Utils::matmul(Utils::transpose(value_cache_local[head_number]), dV);
+    grad_weights_q_local[head_number] = Utils::matmul(Utils::transpose(qkv_input), dQ);
+    grad_weights_k_local[head_number] = Utils::matmul(Utils::transpose(qkv_input), dK);
+    grad_weights_v_local[head_number] = Utils::matmul(Utils::transpose(qkv_input), dV);
 
     auto grad_query_local_single_head = Utils::matmul(dQ, Utils::transpose(W_q_local_cache[head_number]));
     auto grad_key_local_single_head = Utils::matmul(dK, Utils::transpose(W_k_local_cache[head_number]));
@@ -272,18 +278,8 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
 
 {
 
-    std::cout << "****************************************** " << std::endl;
-    std::cout << "query shape: " << std::endl;
-    Utils::print_matrix_shape(query);
-    std::cout << "key shape: " << std::endl;
-    Utils::print_matrix_shape(key);
-    std::cout << "value shape: " << std::endl;
-    Utils::print_matrix_shape(value);
-
     // Copy over parts from total weights to local weights
     size_t d_segment_size = weights_q[0].size() / num_heads;
-    std::cout << " num_heads: " << num_heads << std::endl;
-    std::cout << " d_segment_size: " << d_segment_size << std::endl;
    
     for (size_t i = 0; i < weights_q.size(); ++i)
     {
@@ -294,11 +290,6 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
             W_v_local_cache[head_number][i][j] = weights_v[i][j + d_segment_size * head_number];
         }
     }
-    std::cout << " weights_q shape: " << std::endl;
-    Utils::print_matrix_shape(weights_q);
-
-    std::cout << " W_q_local_cache[0] shape: " << std::endl;
-    Utils::print_matrix_shape(W_q_local_cache[0]);
 
     // 1. Linear transformations for Q, K, V for this head
     query_cache_local[head_number] = Utils::matmul(query, W_q_local_cache[head_number]);
@@ -308,7 +299,6 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
     // 2. Scaled dot-product attention
     //std::vector<std::vector<float>> attention_output;
     auto attention_output = scaled_dot_product_attention(query_cache_local[head_number], key_cache_local[head_number], value_cache_local[head_number], padding_mask, head_number);
-
     // Merge attention output back into original format
     for (size_t i = 0; i < attention_output.size(); ++i)
     {
@@ -319,6 +309,8 @@ std::vector<std::vector<float>> MultiHeadAttention::forward(
     }
 
     return merged_attention_output;
+    
+    //return query;
 }
 
 
@@ -363,19 +355,19 @@ void MultiHeadAttention::update_weights()
     // Example: read from some config or define here
     float learning_rate = GLOBAL_ATTENTION_learning_rate;
     float momentum = GLOBAL_ATTENTION_momentum;
+    
 
+    size_t d_segment_size = grad_weights_k_local[0][0].size();
     for (int h_cnt = 0; h_cnt < num_heads;h_cnt++)
     {
         for(size_t i = 0; i < grad_weights_k.size(); i++)
         {
-            for(size_t j = 0; j < grad_weights_k[0].size(); j++ )
+            for(size_t j = 0; j < d_segment_size; j++ )
             {
-                grad_weights_k[i][j] = grad_weights_k_local[h_cnt][i][j];
+                grad_weights_k[i][j + h_cnt * d_segment_size] = grad_weights_k_local[h_cnt][i][j];
             }
         }
     }
-        
-
     // Update weights_q
     for (size_t i = 0; i < weights_q.size(); i++)
     {
@@ -412,6 +404,54 @@ void MultiHeadAttention::update_weights()
         }
     }
 }
+std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention(
+    const std::vector<std::vector<float>> &query,
+    const std::vector<std::vector<float>> &key,
+    const std::vector<std::vector<float>> &value,
+    const std::vector<int> &padding_mask,
+    int head_number)
+{
+    // 1. Compute QK^T
+ 
+    auto scores = Utils::matmul(query, Utils::transpose(key));
+
+    // 2. Scale scores by sqrt(d_k)
+    float scale_factor = std::sqrt(static_cast<float>(key[0].size()));
+    for (size_t i = 0; i < scores.size(); ++i)
+    {
+        for (size_t j = 0; j < scores[0].size(); ++j)
+        {
+            scores[i][j] /= scale_factor;
+        }
+    }
+    // 3. Apply masking
+    for (size_t i = 0; i < scores.size(); ++i)
+    {
+        for (size_t j = 0; j < scores[i].size(); ++j)
+        {
+            if (padding_mask[j] == 0)
+            {
+                scores[i][j] = -std::numeric_limits<float>::infinity();
+            }
+        }
+    }
+    // 4. Apply softmax to scores
+    // Softmax
+    for (size_t i = 0; i < scores.size(); ++i)
+    {
+        scores[i] = Utils::softmax(scores[i]);
+    }
+    // 5. Multiply scores with V
+    // Store final attention distribution for backprop
+    attention_score_cache_local[head_number] = scores;
+
+    auto output = Utils::matmul(scores, value);
+    return output;
+}
+
+
+
+/*
 
 std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention(
     const std::vector<std::vector<float>> &query,
@@ -424,6 +464,7 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
     // 1. Compute QK^T
     std::cout << "query in dot product function shape: " << std::endl;
     Utils::print_matrix_shape(query);
+    
     std::cout << "Utils::transpose(key) shape: " << std::endl;
     Utils::print_matrix_shape(Utils::transpose(key));
 
@@ -468,6 +509,7 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
 
     auto output = Utils::matmul(scores, value);
     std::cout << "output shape: " << std::endl;
+    
     Utils::print_matrix_shape(output);
     std::cout << "****************************************** " << std::endl;
 
@@ -562,3 +604,4 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
 
     return output;
 }
+*/

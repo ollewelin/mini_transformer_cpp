@@ -225,11 +225,12 @@ std::vector<std::vector<float>> MultiHeadAttention::backward(
             {
                 grad_total_all_heads[row_cnt][col_cnt] += grad_query_local_single_head[row_cnt][col_cnt];//Add up the rest of the heads gradients
             }
-            grad_total_all_heads[row_cnt][col_cnt] += grad_key_local_single_head[row_cnt][col_cnt];//Add up the key gradient
-            grad_total_all_heads[row_cnt][col_cnt] += grad_value_local_single_head[row_cnt][col_cnt];//Add up the value gradient
+    //        grad_total_all_heads[row_cnt][col_cnt] += grad_key_local_single_head[row_cnt][col_cnt];//Add up the key gradient
+    //        grad_total_all_heads[row_cnt][col_cnt] += grad_value_local_single_head[row_cnt][col_cnt];//Add up the value gradient
         }
     }
     return grad_total_all_heads;
+    
 }
 
 void MultiHeadAttention::save_weights(int layer_index)

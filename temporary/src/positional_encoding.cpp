@@ -12,9 +12,6 @@ PositionalEncoding::PositionalEncoding(int max_len, int d_model)
 // Like a meter stick with 128 evenly spaced lines, 
 // this determines how finely token positions are encoded.    
 
-    std::cout << "debug 3.5 max_len: " << max_len << std::endl;
-    std::cout << "debug 3.6 d_model: " << d_model << std::endl;
-
     pos_encoding = std::vector<std::vector<float>>(max_len, std::vector<float>(d_model, 0.0));
     ofstream sin_file("sin.dat");
     ofstream cos_file("cos.dat");

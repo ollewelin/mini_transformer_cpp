@@ -28,6 +28,7 @@ std::vector<std::vector<float>> softmax_backward(
     void scale_inplace(std::vector<std::vector<float>>& matrix, float scale_factor);
     // Print a matrix
     void print_matrix(const std::vector<std::vector<float>>& matrix);
+    void print_matrix_shape(const std::vector<std::vector<float>>& matrix);
     
     // Check matrix dimensions
     void check_matrices(const std::vector<std::vector<float>>& A,

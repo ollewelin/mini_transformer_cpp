@@ -37,20 +37,22 @@ void Transformer::save_LayerNormalization_weights()
 {
 //not used
 }
+
 std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& input, const std::vector<int>& padding_mask) {
     // Step 1: Embedding and positional encoding
     std::vector<std::vector<float>> transformer_matrix = embedding.forward(input);
     transformer_matrix = pos_encoding.add_positional_encoding(transformer_matrix);
     input_tokens = input;//Used for backprop
-
     // Step 2: Iterate through attention and feedforward layers
+    attention_inputs.clear();
     for (size_t i = 0; i < attention_layers.size(); ++i) {
         // Save the input for residual connection
         residual_connections.clear();
         residual_connections.push_back(transformer_matrix);
-        auto transformer_matrix_input = transformer_matrix;
+        auto transformer_matrix_input = transformer_matrix;//Make a "input" Copy for attention heads loop where ouptut not will overwrite the input
+        attention_inputs.push_back(transformer_matrix_input);//for backprop
         // Apply MultiHeadAttention with padding mask
-        for(int j=0;j<Transformer::num_heads;j++)
+        for(int j=0;j<num_heads;j++)
         {
             transformer_matrix = attention_layers[i].forward(transformer_matrix_input, transformer_matrix_input, transformer_matrix_input, padding_mask, j);
         }
@@ -73,6 +75,7 @@ std::vector<std::vector<float>> Transformer::forward(const std::vector<int>& inp
         auto norm_feedforward_output = add_matrices(residual_connections.back(), masked_feedforward_output);
         // Mask padding in final normalized output
         transformer_matrix = Utils::mask_padding(norm_feedforward_output, padding_mask);
+        
     }
 
     return transformer_matrix;
@@ -111,10 +114,12 @@ std::vector<std::vector<float>> Transformer::backward(const std::vector<std::vec
         // Backprop attention
         residual_connections.clear();
         residual_connections.push_back(gradient);
+        auto gradient_attention_input = gradient;//Make a "input" Copy for attention heads loop where ouptut not will overwrite the input
         for(int j=0;j<Transformer::num_heads;j++)
         {
-            gradient = attention_layers[i].backward(gradient, j);
+            gradient = attention_layers[i].backward(gradient_attention_input, attention_inputs[i], j);
         }
+
         attention_layers[i].update_weights();
         gradient = add_matrices(gradient, residual_connections.back());
     }

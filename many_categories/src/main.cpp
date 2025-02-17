@@ -460,15 +460,20 @@ int main()
 
     // Set your Transformer hyperparameters
     int d_model = 64;
-    int num_heads = 1;
+    int num_heads = 4;
     int d_ff = 256;
     int num_layers = 6;
 
     // Create the Transformer
     int vocab_size = (int)vocab.size();
     std::cout << "vocab_size = " << vocab_size << "\n";
-    Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
-
+    
+    Transformer transformer(vocab_size, d_model, num_heads, max_len, d_ff, num_layers, load_parameters_yes_no);
+    std::cout << "vocab_size = " << vocab_size << "\n";
+    std::cout << "d_model = " << d_model << "\n";
+    std::cout << "max_len = " << max_len << "\n";
+    std::cout << "num_heads = " << num_heads << "\n";
+    std::cout << "num_layers = " << num_layers << "\n";
     // Initialize or load final layer
     std::vector<std::vector<float>> final_weights(d_model, std::vector<float>(num_categories, 0.0f));
     std::vector<float> final_bias(num_categories, 0.0f);
@@ -525,8 +530,8 @@ int main()
                                                          std::vector<float>(num_categories, 0.0f));
         std::vector<float> velocity_bias(num_categories, 0.0f);
 
-        GLOBAL_learning_rate = 0.00002f;
-        GLOBAL_momentum = 0.92f;
+        GLOBAL_learning_rate = 0.0002f;
+        GLOBAL_momentum = 0.9f;
         GLOBAL_ATTENTION_learning_rate = GLOBAL_learning_rate;
         GLOBAL_ATTENTION_momentum = GLOBAL_momentum;
         std::cout << "Training learning_rate: " << GLOBAL_learning_rate << "\n";
@@ -565,7 +570,9 @@ int main()
                 auto pad_mask = create_padding_mask(trunc_seq, max_len);
 
                 // Forward
+        
                 auto output_trans = transformer.forward(trunc_seq, pad_mask);
+
                 auto pooled_output = mean_pooling(output_trans);
                 auto logits = linear_layer(pooled_output, final_weights, final_bias);
                 auto probabilities = softmax(logits);

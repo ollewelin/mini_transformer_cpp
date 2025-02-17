@@ -8,19 +8,20 @@
 
 class MultiHeadAttention {
 public:
-    MultiHeadAttention(int d_model, int num_heads, bool load_parameters_yes_no, int layer_index);
+    MultiHeadAttention(int d_model, int num_heads, int max_len, bool load_parameters_yes_no, int layer_index);
 
     std::vector<std::vector<float>> forward(
         const std::vector<std::vector<float>>& query,
         const std::vector<std::vector<float>>& key,
         const std::vector<std::vector<float>>& value,
         const std::vector<int>& padding_mask,
-        int head_cnt
+        int head_number
     );
 
     // Backward pass to compute gradients
     std::vector<std::vector<float>> backward(
         const std::vector<std::vector<float>>& grad_output, // Gradient from the next layer
+        const std::vector<std::vector<float>>& qkv_input,      
         int head_number
     );
 
@@ -47,7 +48,8 @@ public:
         const std::vector<std::vector<float>>& query,
         const std::vector<std::vector<float>>& key,
         const std::vector<std::vector<float>>& value,
-        const std::vector<int>& padding_mask
+        const std::vector<int>& padding_mask,
+        int head_number
     );
 
     // ——————————————
@@ -78,41 +80,31 @@ public:
     std::vector<std::vector<float>> grad_weights_k;
     std::vector<std::vector<float>> grad_weights_v;
 
-    std::vector<std::vector<float>> grad_query_full_output;
-
-    // ——————————————————
-    // Caches for backprop
-    // ——————————————————
-    std::vector<std::vector<float>> query_cache; 
-    std::vector<std::vector<float>> key_cache;   
-    std::vector<std::vector<float>> value_cache; 
-    std::vector<std::vector<float>> attention_probs_cache; // Post-softmax attention distribution
-    int num_heads;
-    
-    // ------ Caches of partial slices and results ------
-    // For each head, store:
-    //   - the "input slice" to the matmul (Q/K/V)
-    //   - the "local weight" for Q/K/V
-    //   - the "output" of the matmul (the Q_local etc. that go into attention)
-    //   - the final attention output for that head
-
-    // Q/K/V input slices: batch_size x segment_size
-    std::vector<std::vector<std::vector<float>>> Q_local_input_cache;
-    std::vector<std::vector<std::vector<float>>> K_local_input_cache;
-    std::vector<std::vector<std::vector<float>>> V_local_input_cache;
+    std::vector<std::vector<std::vector<float>>> grad_weights_q_local;
+    std::vector<std::vector<std::vector<float>>> grad_weights_k_local;
+    std::vector<std::vector<std::vector<float>>> grad_weights_v_local;
 
     // local weight slices: segment_size x segment_size
     std::vector<std::vector<std::vector<float>>> W_q_local_cache;
     std::vector<std::vector<std::vector<float>>> W_k_local_cache;
     std::vector<std::vector<std::vector<float>>> W_v_local_cache;
 
+    //This 3 could be summed up togheter it is the gradeient with respect to forward input side
+    std::vector<std::vector<float>> grad_total_all_heads;//Could taken from Q all head summed up OR of all three matrix Q,K and V summed up
+    std::vector<std::vector<float>> merged_attention_output;
+     
+    // ——————————————————
+    // Caches for backprop
+    // ——————————————————
+    std::vector<std::vector<std::vector<float>>> attention_score_cache_local;
     // outputs of the linear transforms (Q_local, K_local, V_local)
-    std::vector<std::vector<std::vector<float>>> Q_local_cache;
-    std::vector<std::vector<std::vector<float>>> K_local_cache;
-    std::vector<std::vector<std::vector<float>>> V_local_cache;
-
-
-
+    std::vector<std::vector<std::vector<float>>> query_cache_local; 
+    std::vector<std::vector<std::vector<float>>> key_cache_local;   
+    std::vector<std::vector<std::vector<float>>> value_cache_local; 
+    int num_heads;
+    int max_len;
+    int d_model;
+ 
 };
 
 #endif // ATTENTION_H

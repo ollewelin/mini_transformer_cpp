@@ -642,7 +642,7 @@ int main() {
     cout << "token_cnt length: " << length << endl;
     // Define parameters
     int vocab_size = 5000;
-    int d_model = 24; // The "resolution" of the positional encoding and embedding space. 
+    int d_model = 64; // The "resolution" of the positional encoding and embedding space. 
                     // Think of it like a meter stick with 128 evenly spaced lines: 
                     // this determines how finely the meaning of a token can be represented
                     // across multiple dimensions.
@@ -666,7 +666,7 @@ int main() {
                     // However, higher d_model also increases computational complexity and 
                     // the risk of overfitting for small datasets, so a balance is needed.
 
-    int num_heads = 1;// Number of attention heads. The attention class split the Q,K and V vector bus into smaller attention vectors 
+    int num_heads = 4;// Number of attention heads. The attention class split the Q,K and V vector bus into smaller attention vectors 
                       // and then the splitted Q_split,K_split and V_split vectors combined togheter again before enter the global Q,K and V vector bus feed forward
                       // so if num_heads = 4 and d_model = 64 each attention have only d_model/num_heads = 64/4 = 16 loacal dimentsion to calculate on
     int d_ff = 96;   // d_ff: Dimensionality of the hidden layer in the feed-forward network.
@@ -822,7 +822,12 @@ int main() {
     }
 
     // Create transformer
-    Transformer transformer(vocab_size, d_model, max_len, num_heads, d_ff, num_layers, load_parameters_yes_no);
+    Transformer transformer(vocab_size, d_model, num_heads, max_len, d_ff, num_layers, load_parameters_yes_no);
+    std::cout << " ** vocab_size: " << vocab_size << std::endl;   
+    std::cout << " ** d_model: " << d_model << std::endl;
+    std::cout << " ** num_heads: " << num_heads << std::endl;
+    std::cout << " ** max_len: " << max_len << std::endl;   
+    std::cout << " ** num_layers: " << num_layers << std::endl;  
 
     cout << "Do you want to start mini prompt mode? (Y/N): ";
     string response;
@@ -841,7 +846,7 @@ int main() {
                                                      std::vector<float>(final_weights[0].size(), 0.0f));
     std::vector<float> velocity_bias(final_bias.size(), 0.0f);
 
-    GLOBAL_learning_rate = 0.01;
+    GLOBAL_learning_rate = 0.001;
     GLOBAL_momentum = 0.9;
     GLOBAL_ATTENTION_learning_rate = GLOBAL_learning_rate;//0.1
     GLOBAL_ATTENTION_momentum = GLOBAL_momentum; //0.5  
@@ -890,7 +895,12 @@ int main() {
             std::cout << std::endl;
 #endif
             // Forward pass through transformer
+            
             auto output_trans = transformer.forward(trunc_sequence, padding_mask);
+
+        //    std::cout << "Halt program debug here" << std::endl;
+        //    while(1)
+        //    {}
 #ifdef DEBUG_PRINT_MAIN 
             std::cout << "Transformer Output Before Pooling:" << std::endl;
             print_float_vector_2D(output_trans);

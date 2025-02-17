@@ -236,6 +236,12 @@ void Utils::print_matrix(const std::vector<std::vector<float>>& matrix)
 
 }
 
+
+    void Utils::print_matrix_shape(const std::vector<std::vector<float>>& matrix) {
+        size_t rows = matrix.size();
+        size_t cols = (!matrix.empty()) ? matrix[0].size() : 0;
+        std::cout << "vector_shape_size[" << rows << "][" << cols << "]\n";
+    }
 float Utils::simple_L2_norm(const std::vector<std::vector<float>>& matrix)
 {
     float sum_squares = 0.0f;

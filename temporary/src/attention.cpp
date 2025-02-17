@@ -225,8 +225,8 @@ std::vector<std::vector<float>> MultiHeadAttention::backward(
             {
                 grad_total_all_heads[row_cnt][col_cnt] += grad_query_local_single_head[row_cnt][col_cnt];//Add up the rest of the heads gradients
             }
-    //        grad_total_all_heads[row_cnt][col_cnt] += grad_key_local_single_head[row_cnt][col_cnt];//Add up the key gradient
-    //        grad_total_all_heads[row_cnt][col_cnt] += grad_value_local_single_head[row_cnt][col_cnt];//Add up the value gradient
+            grad_total_all_heads[row_cnt][col_cnt] += grad_key_local_single_head[row_cnt][col_cnt];//Add up the key gradient
+            grad_total_all_heads[row_cnt][col_cnt] += grad_value_local_single_head[row_cnt][col_cnt];//Add up the value gradient
         }
     }
     return grad_total_all_heads;
@@ -365,7 +365,9 @@ void MultiHeadAttention::update_weights()
         {
             for(size_t j = 0; j < d_segment_size; j++ )
             {
+                grad_weights_q[i][j + h_cnt * d_segment_size] = grad_weights_q_local[h_cnt][i][j];
                 grad_weights_k[i][j + h_cnt * d_segment_size] = grad_weights_k_local[h_cnt][i][j];
+                grad_weights_v[i][j + h_cnt * d_segment_size] = grad_weights_v_local[h_cnt][i][j];
             }
         }
     }
@@ -451,158 +453,3 @@ std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention
 }
 
 
-
-/*
-
-std::vector<std::vector<float>> MultiHeadAttention::scaled_dot_product_attention(
-    const std::vector<std::vector<float>> &query,
-    const std::vector<std::vector<float>> &key,
-    const std::vector<std::vector<float>> &value,
-    const std::vector<int> &padding_mask,
-    int head_number)
-{
-#ifndef PRINT_OUT_TEST_SCALED_DOT_PRODUCT_ATTENTION
-    // 1. Compute QK^T
-    std::cout << "query in dot product function shape: " << std::endl;
-    Utils::print_matrix_shape(query);
-    
-    std::cout << "Utils::transpose(key) shape: " << std::endl;
-    Utils::print_matrix_shape(Utils::transpose(key));
-
-    auto scores = Utils::matmul(query, Utils::transpose(key));
-    std::cout << "scores shape: " << std::endl;
-    Utils::print_matrix_shape(scores);
-
-    // 2. Scale scores by sqrt(d_k)
-    float scale_factor = std::sqrt(static_cast<float>(key[0].size()));
-    for (size_t i = 0; i < scores.size(); ++i)
-    {
-        for (size_t j = 0; j < scores[0].size(); ++j)
-        {
-            scores[i][j] /= scale_factor;
-        }
-    }
-    // 3. Apply masking
-    for (size_t i = 0; i < scores.size(); ++i)
-    {
-        for (size_t j = 0; j < scores[i].size(); ++j)
-        {
-            if (padding_mask[j] == 0)
-            {
-                scores[i][j] = -std::numeric_limits<float>::infinity();
-            }
-        }
-    }
-    // 4. Apply softmax to scores
-    // Softmax
-    for (size_t i = 0; i < scores.size(); ++i)
-    {
-        scores[i] = Utils::softmax(scores[i]);
-    }
-    // 5. Multiply scores with V
-    // Store final attention distribution for backprop
-    attention_score_cache_local[head_number] = scores;
-
-    std::cout << "scores shape: " << std::endl;
-    Utils::print_matrix_shape(scores);
-    std::cout << "value in dot product function shape: " << std::endl;
-    Utils::print_matrix_shape(value);
-
-    auto output = Utils::matmul(scores, value);
-    std::cout << "output shape: " << std::endl;
-    
-    Utils::print_matrix_shape(output);
-    std::cout << "****************************************** " << std::endl;
-
-#else
-
-    using namespace std;
-
-    //===============================
-    cout << "\n=== Scaled Dot-Product Attention Debug Output ===\n";
-    cout << "\nStep 1: Compute QK^T\n";
-    cout << "Query (Q) matrix (shape: " << query.size() << " x " << query[0].size() << "):\n";
-    Utils::print_matrix(query); // Assuming Utils has a method to print matrices
-    cout << "Key (K) matrix (shape: " << key.size() << " x " << key[0].size() << "):\n";
-    Utils::print_matrix(key);
-    //===============================
-
-    // 1. Compute QK^T
-    auto scores = Utils::matmul(query, Utils::transpose(key));
-
-    //===============================
-    cout << "QK^T (scores matrix, shape: " << scores.size() << " x " << scores[0].size() << "):\n";
-    Utils::print_matrix(scores);
-    cout << "Each element in this matrix represents the dot product similarity between a query vector (row) and a key vector (column).\n";
-    cout << "For example:\n";
-    cout << "  - scores[0][0] = dot product of Q[0] and K[0] (similarity between token 1's query and token 1's key).\n";
-    cout << "  - scores[0][1] = dot product of Q[0] and K[1] (similarity between token 1's query and token 2's key).\n";
-    cout << "  - scores[1][2] = dot product of Q[1] and K[2] (similarity between token 2's query and token 3's key).\n";
-    cout << "Each row represents the similarity of a specific token's query with all tokens' keys, "
-         << "and each column represents the similarity of all queries with a specific token's key.\n";
-    //===============================
-
-    // 2. Scale scores by sqrt(d_k)
-    float scale_factor = std::sqrt(static_cast<float>(key[0].size()));
-
-    //===============================
-    cout << "\nStep 2: Scale scores by sqrt(d_k)\n";
-    cout << "Scaling factor (sqrt(d_k)): " << scale_factor << endl;
-    //===============================
-
-    for (size_t i = 0; i < scores.size(); ++i)
-    {
-        for (size_t j = 0; j < scores[0].size(); ++j)
-        {
-            scores[i][j] /= scale_factor;
-        }
-    }
-
-    //===============================
-    cout << "Scaled scores matrix:\n";
-    Utils::print_matrix(scores);
-    cout << "Each score is scaled to adjust for the dimensionality of the key vectors.\n";
-    //===============================
-
-    // 3. Apply masking
-    for (size_t i = 0; i < scores.size(); ++i)
-    {
-        for (size_t j = 0; j < scores[i].size(); ++j)
-        {
-            if (padding_mask[j] == 0)
-            {
-                scores[i][j] = -std::numeric_limits<float>::infinity();
-            }
-        }
-    }
-    // 4. Apply softmax to scores
-    // Softmax
-    for (size_t i = 0; i < scores.size(); ++i)
-    {
-        scores[i] = Utils::softmax(scores[i]);
-    }
-
-    //===============================
-    cout << "Softmax applied (attention weights):\n";
-    Utils::print_matrix(scores);
-    cout << "Each row represents the attention distribution for a token. "
-         << "The values sum to 1, showing how much each token attends to other tokens.\n";
-    //===============================
-
-    // 5. Multiply scores with V
-    // Store final attention distribution for backprop
-    attention_score_cache_local[head_number] = scores;
-    auto output = Utils::matmul(scores, value);
-
-    //===============================
-    cout << "Output matrix (shape: " << output.size() << " x " << output[0].size() << "):\n";
-    Utils::print_matrix(output);
-    cout << "Each row in the output matrix corresponds to the weighted sum of value vectors "
-         << "for each token, based on its attention distribution.\n";
-    //===============================
-
-#endif
-
-    return output;
-}
-*/

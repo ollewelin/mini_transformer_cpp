@@ -1098,10 +1098,11 @@ Epoch 4 / 5000
 ```
 ## Examples where I test tricky sentance from Scientific Verify
 For example this sentance could indeed correspond to disscussion about Politics:
-        -Technological advancements are often driven by scientific discoveries.
+        
+###        -Technological advancements are often driven by scientific discoveries.
 
 Where for example this verify sentance is more clear a Scientific topics compare to other topics
-        -The study of Earth's radiation belts enhances understanding of space weather
+###        -The study of Earth's radiation belts enhances understanding of space weather
 ```
 
 Enter a string (or type 'exit' to quit): Technological advancements are often driven by scientific discoveries.

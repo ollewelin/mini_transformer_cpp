@@ -1096,7 +1096,7 @@ Average Loss for Epoch 3: 2.19552
 Epoch 4 / 5000
 
 ```
-## Examples where I test tricky sentance from Scientific Verify
+## Examples where I test tricky sentance from Scientific Verify datasets
 For example this sentance could indeed correspond to disscussion about Politics:
         
 ###        -Technological advancements are often driven by scientific discoveries.

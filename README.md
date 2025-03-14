@@ -1190,6 +1190,23 @@ Culture : 1.71266e-05
 
 Predicted category: Scientific
 
+Enter a string (or type 'exit' to quit): Studies of ancient tsunamis provide data for refining coastal hazard models.
+Token IDs: 1258 4999 580 2331 4394 3018 5310 1882 1000 4015 2007 
+
+Category probabilities (sorted highest to lowest):
+Scientific : 0.999921
+History : 7.91496e-05
+Culture : 9.47026e-11
+Sports : 1.75172e-11
+Industries : 3.72609e-12
+Fashion : 1.7708e-17
+Health : 5.74398e-19
+Nature : 1.35124e-19
+Economics : 5.78381e-23
+Politics : 0
+
+Predicted category: Scientific
+
 ```
 
 

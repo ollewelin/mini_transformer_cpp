@@ -1208,6 +1208,278 @@ Politics : 0
 Predicted category: Scientific
 
 ```
+## Trained to Train avg_loss 0.583494
+### Test manualy from verify (unseened topics during training processs) some ambigoues topics reslut farly good classification on Nature, Health, Scientific, Culture ambiguitly here.
+
+
+```
+
+========================================================================================================
+Transformer Test in Mini Format (C/C++) - No Use of ML Libraries
+The goal is to build and understand the Transformer algorithm from scratch using pure C++.
+========================================================================================================
+
+Loaded vocabulary of size: 6560 from vocab.txt
+Loaded 10 categories from labels.txt.
+Loaded 2720 examples across 10 categories.
+Loaded 300 examples across 10 categories.
+Largest token sequence found in dataset(s): 26
+We will use max_len = 26
+Do you want to load an existing model parameter with embedding matrix? (Y/N): y
+vocab_size = 6560
+Embedding matrix loaded from file: embedding_matrix.bin
+PositionalEncoding Constructor
+Attention weights for layer 0 loaded from files.
+FeedForward weights for layer 0 loaded from file.
+Attention weights for layer 1 loaded from files.
+FeedForward weights for layer 1 loaded from file.
+Attention weights for layer 2 loaded from files.
+FeedForward weights for layer 2 loaded from file.
+Attention weights for layer 3 loaded from files.
+FeedForward weights for layer 3 loaded from file.
+Attention weights for layer 4 loaded from files.
+FeedForward weights for layer 4 loaded from file.
+Attention weights for layer 5 loaded from files.
+FeedForward weights for layer 5 loaded from file.
+Transformer initialized with 6 layers.
+vocab_size = 6560
+d_model = 64
+max_len = 26
+d_ff = 256
+num_heads = 4
+num_layers = 6
+Final layer weights loaded from final_layer_weight.bin.
+Do you want to start mini prompt mode? (Y/N): y
+
+Enter a string (or type 'exit' to quit): Nature provides essential resources such as clean air, water, and food that are vital for human survival.
+Token IDs: 5809 4504 5762 3822 1841 4595 195 5408 5333 2593 2710 3363 5775 88 5310 1039 5390 
+
+Category probabilities (sorted highest to lowest):
+Nature : 0.759942
+Scientific : 0.222652
+Sports : 0.00825948
+Health : 0.00822282
+Fashion : 0.000571512
+Industries : 0.000311432
+History : 3.47442e-05
+Economics : 3.53198e-06
+Politics : 1.64562e-06
+Culture : 3.23604e-08
+
+Predicted category: Nature
+
+Enter a string (or type 'exit' to quit): Conservation efforts are crucial for protecting biodiversity and preserving the delicate balance of ecosystems.
+Token IDs: 1486 2578 5775 3337 5310 1270 887 2593 5774 3335 6366 5483 4999 4638 
+
+Category probabilities (sorted highest to lowest):
+Nature : 0.903096
+Scientific : 0.0628609
+History : 0.0106082
+Health : 0.0102999
+Sports : 0.00810122
+Politics : 0.0022945
+Economics : 0.00115743
+Culture : 0.000819697
+Fashion : 0.000467882
+Industries : 0.00029404
+
+Predicted category: Nature
+
+Enter a string (or type 'exit' to quit): Climate change poses a significant threat to the environment, impacting ecosystems and human societies.
+Token IDs: 24 5625 1059 1460 3916 4926 2899 3335 386 1950 4638 2593 1039 6056 
+
+Category probabilities (sorted highest to lowest):
+Nature : 0.760309
+History : 0.0836098
+Scientific : 0.0813435
+Sports : 0.0374378
+Health : 0.029654
+Industries : 0.00392386
+Politics : 0.00204038
+Economics : 0.00142074
+Culture : 0.000175188
+Fashion : 8.57214e-05
+
+Predicted category: Nature
+
+Enter a string (or type 'exit' to quit): Natural disasters, such as earthquakes, hurricanes, and wildfires, can cause widespread devastation and loss.
+Token IDs: 325 2182 1841 4595 3093 1 2593 5393 782 2905 5194 199 2593 870 
+
+Category probabilities (sorted highest to lowest):
+Health : 0.345665
+Nature : 0.309895
+Sports : 0.237562
+Fashion : 0.0776465
+Industries : 0.0164377
+History : 0.00598963
+Economics : 0.00531774
+Scientific : 0.000657111
+Culture : 0.000443966
+Politics : 0.000385485
+
+Predicted category: Health
+
+Enter a string (or type 'exit' to quit): Spending time in nature can reduce stress, improve mental well-being, and increase overall happiness.
+Token IDs: 6079 56 5635 5809 782 175 454 5157 6224 1 2593 2800 3193 4232 
+
+Category probabilities (sorted highest to lowest):
+Health : 0.95253
+Industries : 0.0213882
+Nature : 0.0137887
+Scientific : 0.00696072
+Fashion : 0.00201527
+Sports : 0.00185259
+Economics : 0.00133811
+History : 0.000105521
+Politics : 1.95416e-05
+Culture : 1.23754e-06
+
+Predicted category: Health
+
+Enter a string (or type 'exit' to quit): Protecting endangered species is essential for maintaining the health and diversity of ecosystems.
+Token IDs: 1270 688 4177 2766 5762 5310 5592 3335 4188 2593 4941 4999 4638 
+
+Category probabilities (sorted highest to lowest):
+Nature : 0.694203
+Health : 0.255409
+Scientific : 0.0293365
+Sports : 0.0182657
+History : 0.0014802
+Fashion : 0.000793344
+Politics : 0.000209766
+Industries : 0.000175679
+Culture : 7.03883e-05
+Economics : 5.6601e-05
+
+Predicted category: Nature
+
+Enter a string (or type 'exit' to quit): Investing in renewable energy sources is crucial for mitigating climate change and building a sustainable future.
+Token IDs: 2631 5635 5474 2935 983 2766 3337 5310 2236 24 5625 2593 5045 1460 6192 4657 
+
+Category probabilities (sorted highest to lowest):
+Scientific : 0.406941
+Industries : 0.275194
+Nature : 0.118197
+Health : 0.0976247
+Economics : 0.0302656
+Sports : 0.0260555
+Fashion : 0.0231365
+Politics : 0.016183
+History : 0.00638406
+Culture : 1.86971e-05
+
+Predicted category: Scientific
+
+Enter a string (or type 'exit' to quit): Pollution from various sources harms the environment and poses risks to human health and well-being.
+Token IDs: 6303 3022 6244 983 4630 3335 386 2593 1059 3744 2899 1039 4188 2593 1 
+
+Category probabilities (sorted highest to lowest):
+Health : 0.669705
+Nature : 0.137413
+History : 0.102832
+Sports : 0.0540507
+Industries : 0.025329
+Scientific : 0.00679907
+Economics : 0.00165475
+Fashion : 0.00164917
+Politics : 0.000548297
+Culture : 1.94617e-05
+
+Predicted category: Health
+
+Enter a string (or type 'exit' to quit): Forests play a vital role in regulating the climate, providing habitat for wildlife, and supporting biodiversity.
+Token IDs: 2772 747 1460 88 2878 5635 3815 3335 24 720 292 5310 5399 2593 5438 887 
+
+Category probabilities (sorted highest to lowest):
+Nature : 0.94714
+History : 0.027228
+Scientific : 0.0140345
+Sports : 0.00646058
+Fashion : 0.00239566
+Health : 0.00170662
+Industries : 0.000618043
+Economics : 0.000180639
+Politics : 0.000166254
+Culture : 7.0109e-05
+
+Predicted category: Nature
+
+Enter a string (or type 'exit' to quit): Nature inspires art, music, literature, and countless other forms of creative expression throughout history.
+Token IDs: 5809 5935 6030 3562 5944 2593 3817 3998 1602 4999 5464 1964 5511 4222 
+
+Category probabilities (sorted highest to lowest):
+Nature : 0.57255
+Culture : 0.225747
+Sports : 0.135099
+Health : 0.0326786
+History : 0.0239842
+Fashion : 0.00466408
+Politics : 0.00309753
+Scientific : 0.00116338
+Economics : 0.000805071
+Industries : 0.000211214
+
+Predicted category: Nature
+
+Enter a string (or type 'exit' to quit): Frogs singing in wetlands announce seasonal rains, their calls essential for attracting mates.
+Token IDs: 5422 4506 5635 3357 1730 5545 1 4536 6137 5762 5310 4732 5223 
+
+Category probabilities (sorted highest to lowest):
+Nature : 0.400277
+Scientific : 0.336839
+Sports : 0.170492
+Industries : 0.0409276
+Fashion : 0.0353444
+Health : 0.00874845
+History : 0.00403186
+Politics : 0.00256141
+Economics : 0.000709638
+Culture : 6.85757e-05
+
+Predicted category: Nature
+
+Enter a string (or type 'exit' to quit): Bright green algae in ponds symbolize both life and the interconnectedness of aquatic ecosystems.
+Token IDs: 4377 3520 4924 5635 6123 579 5539 3816 2593 3335 1038 4999 5104 4638 
+
+Category probabilities (sorted highest to lowest):
+Nature : 0.961784
+History : 0.0140251
+Sports : 0.0101995
+Scientific : 0.00601833
+Culture : 0.00213034
+Fashion : 0.00208787
+Economics : 0.00148597
+Health : 0.001428
+Politics : 0.0005276
+Industries : 0.000313474
+
+Predicted category: Nature
+
+Enter a string (or type 'exit' to quit): Rainbows forming after waterfalls highlight the interaction of water, light, and air.
+Token IDs: 3893 3043 4163 2743 4935 3335 3741 4999 5333 3854 2593 5408 
+
+Category probabilities (sorted highest to lowest):
+Nature : 0.580992
+Sports : 0.314492
+Scientific : 0.0487236
+Health : 0.0438192
+Fashion : 0.00484813
+Industries : 0.00273315
+History : 0.00263073
+Economics : 0.000994674
+Politics : 0.000640466
+Culture : 0.000126865
+
+Predicted category: Nature
+
+Enter a string (or type 'exit' to quit):
+
+
+```
+
+
+
+
 
 
 
